@@ -3,6 +3,17 @@ import bootstrap from "bootstrap";
 import {MapReader, Renderer, Settings} from "mudlet-map-renderer";
 import {Preview} from "./preview";
 import {downloadTags, downloadVersion} from "./versions";
+import convert from "color-convert";
+
+const rainbow = [
+    "#CC99C9",
+    "#9EC1CF",
+    "#9EE09E",
+    "#FDFD97",
+    "#FEB144",
+    "#FF6663"
+];
+let pathPick = 0;
 
 var translator = new Translator({
     defaultLanguage: "pl",
@@ -91,6 +102,8 @@ class PageControls {
         this.toastContainer = document.querySelector(".toast");
         this.searchModal = document.querySelector("#search");
         this.search = document.querySelector(".search-form");
+        this.findPathForm = document.querySelector(".findpath-form");
+        this.findPathModal = document.querySelector("#findpath");
         this.helpModal = document.querySelector("#help");
         this.zoomBar = document.querySelector(".progress-container");
         this.settingsModal = document.querySelector("#settings");
@@ -102,6 +115,7 @@ class PageControls {
         this.versionBadge = document.querySelector(".version-number");
         this.languageSelector = document.querySelector(".lang-dropdown");
         this.currentLanguageFlag = document.querySelector(".current-language-flag");
+        this.pathBox = document.querySelector(".path-box ul");
         this.zIndex = 0;
         this.settings.optimizeDrag = true;
         this.settings.preview = true;
@@ -149,6 +163,15 @@ class PageControls {
             this.submitSearch(event);
         });
 
+        this.findPathForm?.addEventListener("submit", event => {
+            event.preventDefault();
+            this.submitPathFind(event);
+        });
+
+        this.findPathModal?.addEventListener("shown.bs.modal", () => {
+            this.findPathModal.querySelector("input").focus();
+        });
+
         this.searchModal.addEventListener("shown.bs.modal", () => {
             this.searchModal.querySelector("input").focus();
         });
@@ -182,6 +205,8 @@ class PageControls {
                 this.translatePage(element.getAttribute("data-lang"));
             });
         });
+
+        this.paths = {};
     }
 
     init() {
@@ -257,6 +282,13 @@ class PageControls {
                 this.select.value = areaId;
                 this.populateLevelButtons(area.getLevels(), zIndex);
                 this.hideRoomInfo();
+
+                Object.entries(this.paths).forEach(([key, group]) => {
+                    group.remove();
+                    let [from, to] = key.split("#");
+                    this.findPath(from, to);
+                });
+
                 this.renderer.clearHighlight();
                 if (this.settings.keepZoomLevel && this.zoom) {
                     this.renderer.controls.setZoom(this.zoom);
@@ -369,6 +401,19 @@ class PageControls {
         }
     }
 
+    submitPathFind() {
+        bootstrap.Modal.getInstance(this.findPathModal).hide();
+        let inputs = this.findPathForm.querySelectorAll("input");
+
+        let formData = {};
+        inputs.forEach(element => {
+            formData[element.name] = element.value;
+            element.value = "";
+        });
+        this.findPath(formData["start-loc"], formData["end-loc"]);
+        this.findRoom(formData["start-loc"])
+    }
+
     findRoom(id) {
         if (!id) {
             return;
@@ -399,6 +444,44 @@ class PageControls {
             });
         } else {
             this.showToast(translator.translateForKey("location-not-found", translator.currentLanguage));
+        }
+    }
+
+    findPath(from, to) {
+        let key = `${from}#${to}`;
+        let pathColor = this.pathBox.querySelector(`[data-path-key='${key}'] input[type='color']`)?.value ?? rainbow[pathPick++ % rainbow.length];
+        this.paths[key] = this.renderer.controls.renderPath(from, to, convert.hex.rgb(pathColor).map(item => item / 255));
+        if (!this.pathBox.querySelector(`[data-path-key='${key}']`)) {
+            let pathSelector = document.createElement("li");
+            pathSelector.classList.add("list-group-item", "d-inline-flex", "align-items-center", "position-relative");
+            pathSelector.setAttribute("data-path-key", key);
+
+            let color = document.createElement("input");
+            color.setAttribute("type", "color");
+            color.classList.add("small-color", "me-2");
+            color.value = pathColor;
+            color.addEventListener("input", event => {
+                this.paths[key].strokeColor = event.target.value;
+            });
+            pathSelector.appendChild(color);
+
+            pathSelector.appendChild(document.createTextNode(`${from} -> ${to}`));
+
+            let deletePath = document.createElement("span");
+            deletePath.classList.add("badge", "bg-secondary", "position-absolute", "end-0", "me-2");
+            deletePath.appendChild(document.createTextNode(translator.translateForKey("delete", translator.currentLanguage)));
+            deletePath.onclick = () => {
+                this.paths[key].remove();
+                delete this.paths[key];
+                pathSelector.remove();
+
+                if (Object.keys(this.paths).length === 0) {
+                    this.pathBox.parentNode.classList.add("invisible");
+                }
+            };
+            pathSelector.appendChild(deletePath);
+            this.pathBox.appendChild(pathSelector);
+            this.pathBox.parentNode.classList.remove("invisible");
         }
     }
 
@@ -710,8 +793,8 @@ window.controls = controls;
 controls.genericSetup();
 controls.populateSelectBox();
 controls.init();
-
 controls.registerKeyBoard();
+
 
 let dirs = {
     north: "n",

@@ -12,7 +12,8 @@
         "@tarekraafat/autocomplete.js": "^10.2.7",
         "bootstrap": "^5.2.3",
         "bootstrap-autocomplete": "^2.3.7",
-        "mudlet-map-renderer": "^0.0.20"
+        "color-convert": "^2.0.1",
+        "mudlet-map-renderer": "^0.0.21"
     },
     "devDependencies": {
         "@babel/core": "^7.15.0",
