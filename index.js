@@ -5,14 +5,7 @@ import {Preview} from "./preview";
 import {downloadTags, downloadVersion} from "./versions";
 import convert from "color-convert";
 
-const rainbow = [
-    "#CC99C9",
-    "#9EC1CF",
-    "#9EE09E",
-    "#FDFD97",
-    "#FEB144",
-    "#FF6663"
-];
+const rainbow = ["#CC99C9", "#9EC1CF", "#9EE09E", "#FDFD97", "#FEB144", "#FF6663"];
 let pathPick = 0;
 
 var translator = new Translator({
@@ -411,7 +404,7 @@ class PageControls {
             element.value = "";
         });
         this.findPath(formData["start-loc"], formData["end-loc"]);
-        this.findRoom(formData["start-loc"])
+        this.findRoom(formData["start-loc"]);
     }
 
     findRoom(id) {
@@ -450,7 +443,17 @@ class PageControls {
     findPath(from, to) {
         let key = `${from}#${to}`;
         let pathColor = this.pathBox.querySelector(`[data-path-key='${key}'] input[type='color']`)?.value ?? rainbow[pathPick++ % rainbow.length];
-        this.paths[key] = this.renderer.controls.renderPath(from, to, convert.hex.rgb(pathColor).map(item => item / 255));
+        this.paths[key] = this.renderer.controls.renderPath(
+            from,
+            to,
+            convert.hex.rgb(pathColor).map(item => item / 255)
+        );
+        if (!this.paths[key]) {
+            delete this.paths[key];
+            this.showToast(translator.translateForKey("no-path", translator.currentLanguage));
+            pathPick--;
+            return;
+        }
         if (!this.pathBox.querySelector(`[data-path-key='${key}']`)) {
             let pathSelector = document.createElement("li");
             pathSelector.classList.add("list-group-item", "d-inline-flex", "align-items-center", "position-relative");
@@ -794,7 +797,6 @@ controls.genericSetup();
 controls.populateSelectBox();
 controls.init();
 controls.registerKeyBoard();
-
 
 let dirs = {
     north: "n",
