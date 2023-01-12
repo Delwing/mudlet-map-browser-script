@@ -1,10 +1,10 @@
 {
     "name": "mudlet-map-browser-script",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "main": "index.js",
     "license": "MIT",
     "scripts": {
-        "publish": "browserify index.js | uglifyjs -cm > dist/bundle.min.js"
+        "prepublish": "browserify index.js | uglifyjs -cm > dist/bundle.min.js"
     },
     "dependencies": {
         "@andreasremdt/simple-translator": "^2.0.4",
