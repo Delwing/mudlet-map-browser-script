@@ -2262,10 +2262,10 @@ ms@2.1.2:
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.2.tgz#d09d1f357b443f493382a8eb3ccd183872ae6009"
   integrity sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==
 
-mudlet-map-renderer@^0.0.22:
-  version "0.0.22"
-  resolved "https://registry.yarnpkg.com/mudlet-map-renderer/-/mudlet-map-renderer-0.0.22.tgz#607eb4e9566054c5724b29f7ebbb7e98a1bf7e95"
-  integrity sha512-g1wcT4pNu6qZA8dWxqUWJAVpde+9AMhjjyyrpVmV/zfC8UdfmP37XN2o6XGKEqmm9EoObbxu1m5776I+v5Dvuw==
+mudlet-map-renderer@^0.0.23:
+  version "0.0.23"
+  resolved "https://registry.yarnpkg.com/mudlet-map-renderer/-/mudlet-map-renderer-0.0.23.tgz#27dbf5fdfc13340bdb42fb11dbbd62d8d3d7c890"
+  integrity sha512-sd9mvoZT/AAqr+WPud/n3R61T7zpzwSMFqUAstFU3QBzacCqtLxixzNowKmMVy/LZBZ4ADU9CUTkD1yuoNbpbg==
   dependencies:
     node-dijkstra "^2.5.0"
     paper-jsdom "^0.12.17"
