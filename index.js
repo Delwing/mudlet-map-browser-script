@@ -403,8 +403,9 @@ class PageControls {
             formData[element.name] = element.value;
             element.value = "";
         });
-        this.findPath(formData["start-loc"], formData["end-loc"]);
-        this.findRoom(formData["start-loc"]);
+        if (this.findPath(formData["start-loc"], formData["end-loc"])) {
+            this.findRoom(formData["start-loc"]);
+        }
     }
 
     findRoom(id) {
@@ -485,6 +486,7 @@ class PageControls {
             pathSelector.appendChild(deletePath);
             this.pathBox.appendChild(pathSelector);
             this.pathBox.parentNode.classList.remove("invisible");
+            return true;
         }
     }
 
