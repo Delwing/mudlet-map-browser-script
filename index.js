@@ -38,7 +38,7 @@ if (location.hostname !== "") {
             translator.translatePageTo();
         })
         .catch(e => console.log(`Cannot fetch translations. ${e.message}`));
-} else if (translations) {
+} else if (typeof translations !== "undefined") {
     let defaultLanguage = {};
     document.querySelectorAll("[data-i18n]").forEach(item => {
         defaultLanguage[item.getAttribute("data-i18n")] = item.innerHTML;
@@ -109,6 +109,7 @@ class PageControls {
         this.languageSelector = document.querySelector(".lang-dropdown");
         this.currentLanguageFlag = document.querySelector(".current-language-flag");
         this.pathBox = document.querySelector(".path-box ul");
+        this.areaModal = document.getElementById("area-info")
         this.zIndex = 0;
         this.settings.optimizeDrag = true;
         this.settings.preview = true;
@@ -186,6 +187,10 @@ class PageControls {
             event.preventDefault();
             this.resetSettings();
         });
+
+        this.areaModal?.addEventListener("show.bs.modal", () => {
+            this.populateAreaInfo(this.areaId, this.zIndex);
+        })
 
         window.addEventListener("resize", () => {
             this.render();
@@ -350,6 +355,49 @@ class PageControls {
         });
     }
 
+    populateAreaInfo(areaId, zIndex) {
+        let area = this.reader.getArea(areaId, zIndex);
+        this.areaModal.querySelector(".area-name").innerHTML = `${area.areaName} (id: ${area.areaId})`;
+        this.areaModal.querySelector(".area-room-count").innerHTML = Object.keys(area.rooms).length;
+        let areaExits = this.areaModal.querySelector(".area-exits");
+        areaExits.innerHTML = ""
+        Object.values(area.rooms).flatMap(room => this.getAreaExits(room)).forEach(([id, targetId]) => {
+            let targetArea = this.reader.getAreaByRoomId(targetId)
+            let li = document.createElement("li")
+            let roomLink = document.createElement("a")
+            roomLink.setAttribute("href", "#")
+            roomLink.setAttribute("data-room", id)
+            roomLink.appendChild(document.createTextNode(id))
+            roomLink.addEventListener("click", event => {
+                event.preventDefault();
+                this.findRoom(parseInt(event.currentTarget.getAttribute("data-room")));
+            });
+            let arrow = document.createTextNode(" -> ")
+            let targetLink = document.createElement("a")
+            targetLink.setAttribute("href", "#")
+            targetLink.setAttribute("data-room", targetId)
+            targetLink.appendChild(document.createTextNode(`${targetId} (${targetArea.areaName})`))
+            targetLink.addEventListener("click", event => {
+                event.preventDefault();
+                this.findRoom(parseInt(event.currentTarget.getAttribute("data-room")));
+            });
+            li.append(roomLink, arrow, targetLink)
+            areaExits.appendChild(li);
+        })
+    }
+
+    getAreaExits(room) {
+        let exits = [];
+        Object.values(room.exits).filter(target => this.isExitTarget(target)).forEach(exitId => exits.push([room.id, exitId]))
+        Object.values(room.specialExits).filter(target => this.isExitTarget(target)).forEach(exitId => exits.push([room.id, exitId]))
+        return exits
+    }
+
+    isExitTarget(destinationRoom) {
+        let destRoom = this.reader.getRoomById(destinationRoom);
+        return parseInt(destRoom.areaId) !== this.renderer.area.areaId;
+    }
+
     populateSelectBox() {
         this.select.querySelectorAll("option").forEach(item => item.remove());
         this.reader
@@ -384,11 +432,9 @@ class PageControls {
         });
 
         if (formData.roomId !== undefined) {
-            let roomId = formData.roomId;
-            if (isNaN(roomId)) {
+            let roomId = formData.roomId.split(",");
+            if (isNaN(roomId[0])) {
                 roomId = findNpc(roomId);
-            } else {
-                roomId = [roomId];
             }
             this.findRooms(roomId);
         }
@@ -424,17 +470,16 @@ class PageControls {
     }
 
     findRooms(rooms) {
-        //TODO Should actually use multiple rooms
         let area = this.reader.getAreaByRoomId(rooms[0]);
         if (area !== undefined) {
             this.renderArea(area.areaId, area.zIndex).then(() => {
+                this.renderer.controls.centerRoom(rooms[0]);
                 this.renderer.controls.setZoom(1);
                 this.renderer.clearHighlight();
                 rooms.forEach(room => {
                     this.renderer.renderHighlight(room);
                 });
-                this.findRoom(rooms[0]);
-                this.renderer.controls.centerOnItem(this.renderer.highlights);
+                //this.renderer.controls.centerOnItem(this.renderer.highlights);
             });
         } else {
             this.showToast(translator.translateForKey("location-not-found", translator.currentLanguage));
@@ -522,6 +567,8 @@ class PageControls {
     }
 
     showRoomInfo(room) {
+        let bgColor = this.reader.getColors()[room.env] ?? [114, 1, 0]
+        this.infoBox.style.border = `2px solid rgba(${bgColor[0]}, ${bgColor[1]}, ${bgColor[2]}, 0.5)`
         this.infoBox.style.display = "initial";
         this.infoBox.querySelector(".room-id").innerHTML = room.id;
         this.infoBox.querySelector(".room-link").setAttribute("href", `${url}?loc=${room.id}`);
@@ -547,7 +594,8 @@ class PageControls {
         for (let userDataKey in userData) {
             show = true;
             let dataElement = document.createElement("li");
-            dataElement.innerHTML = `${userDataKey}:<br>&nbsp; &nbsp; &nbsp;${userData[userDataKey]}`;
+            dataElement.classList = ["user-data"]
+            dataElement.innerHTML = `<p>${userDataKey}:</p><p class="value">${userData[userDataKey].replaceAll("\\n", "\n")}</p>`;
             containerList.append(dataElement);
         }
         container.style.display = show ? "initial" : "none";

@@ -29,7 +29,7 @@ const downloadNpc = () => {
                         roomNpc[npc.loc] = [];
                     }
                     roomNpc[npc.loc].push(npc.name);
-                    npcs[npc.name] = npcs[npc.name] ? npcs[npc.name].concat([npc.loc]) : [npc.loc];
+                    npcs[npc.name] = npcs[npc.name] && npcs[npc.name].indexOf(npc.loc) == -1 ? npcs[npc.name].concat([npc.loc]) : [npc.loc];
                 });
                 resolve(roomNpc);
             });
@@ -71,21 +71,32 @@ ac = new autoComplete({
     submit: false,
 });
 
+let shouldNavigate = true;
+
 document.querySelector(searchFieldSelector).addEventListener("selection", function (event) {
     if (event.detail.selection.value instanceof Function) {
         event.detail.selection.value();
     } else {
-        searchField.value = event.detail.selection.value.value[0];
+        if (event.detail.selection.value) {
+            searchField.value = event.detail.selection.value.value;
+        }
         searchField.form.requestSubmit();
     }
 });
 
 document.querySelector(searchFieldSelector).addEventListener("keyup", event => {
     if (event.keyCode == 13) {
+        if (shouldNavigate) {
+            ac.select(0);
+        }
         if (searchField.value.trim() !== "" && !isNaN(searchField.value)) {
             searchField.form.requestSubmit();
         }
     }
+});
+
+document.querySelector(searchFieldSelector).addEventListener("navigate", event => {
+    shouldNavigate = false;
 });
 
 document.querySelector(searchFieldSelector).addEventListener("results", function (event) {
