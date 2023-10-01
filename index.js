@@ -735,6 +735,7 @@ class PageControls {
 
     move(x, y) {
         this.renderer.controls.move(x, y);
+        this.preview.update()
     }
 
     goDirection(directionKey) {

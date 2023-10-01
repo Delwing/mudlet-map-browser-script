@@ -1,6 +1,6 @@
 {
     "name": "mudlet-map-browser-script",
-    "version": "0.0.8",
+    "version": "0.0.9",
     "main": "index.js",
     "license": "MIT",
     "scripts": {
@@ -13,7 +13,7 @@
         "bootstrap": "^5.2.3",
         "bootstrap-autocomplete": "^2.3.7",
         "color-convert": "^2.0.1",
-        "mudlet-map-renderer": "^0.0.23"
+        "mudlet-map-renderer": "^0.0.25"
     },
     "devDependencies": {
         "@babel/core": "^7.15.0",
