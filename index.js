@@ -103,6 +103,7 @@ class PageControls {
         this.settingsForm = document.querySelector("#settings form");
         this.resetSettingsButton = document.querySelector("#settings button[type='reset']");
         this.versions = document.querySelector("#versions");
+        this.releaseDescription = document.querySelector(".release-description");
         this.settings = new Settings();
         this.preview = new Preview(this.map, this);
         this.versionBadge = document.querySelector(".version-number");
@@ -121,6 +122,7 @@ class PageControls {
         if (this.versions) {
             this.versions.addEventListener("change", event => {
                 this.replaceVersion(event.target.value);
+                this.releaseDescription.innerHTML = event.target.selectedOptions[0].getAttribute("data-description");
                 bootstrap.Modal.getInstance(this.helpModal).hide();
             });
 
@@ -129,10 +131,12 @@ class PageControls {
                     downloadTags(this.versions.getAttribute("data-tags")).then(tags => {
                         tags.forEach(tag => {
                             let option = document.createElement("option");
-                            option.setAttribute("value", tag);
-                            option.innerHTML = tag;
+                            option.setAttribute("value", tag.tag_name);
+                            option.setAttribute("data-description", tag.body.replaceAll("\n\n", "\n"));
+                            option.innerHTML = tag.tag_name;
                             this.versions.append(option);
                         });
+                        this.releaseDescription.innerHTML = this.versions.firstChild.getAttribute("data-description");
                     });
                 }
             });
@@ -594,8 +598,13 @@ class PageControls {
         for (let userDataKey in userData) {
             show = true;
             let dataElement = document.createElement("li");
-            dataElement.classList = ["user-data"]
-            dataElement.innerHTML = `<p>${userDataKey}:</p><p class="value">${userData[userDataKey].replaceAll("\\n", "\n")}</p>`;
+            dataElement.classList = ["user-data"];
+            let key = document.createElement("p");
+            key.append(`${userDataKey}:`);
+            let value = document.createElement("p");
+            value.append(`${userData[userDataKey].replaceAll("\\n", "\n")}`)
+            value.className = "value";
+            dataElement.append(key, value)
             containerList.append(dataElement);
         }
         container.style.display = show ? "initial" : "none";

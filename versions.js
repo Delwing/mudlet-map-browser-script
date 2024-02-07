@@ -10,7 +10,7 @@ const downloadTags = url => {
             res.on("error", err => reject(err));
             res.on("end", () => {
                 let response = JSON.parse(Buffer.concat(data).toString());
-                resolve(response.map(release => release.tag_name));
+                resolve(response);
             });
         });
     });
