@@ -214,7 +214,8 @@ class PageControls {
     }
 
     init() {
-        let area = 37;
+        let area = this.reader.getAreas()[0].areaId;
+        console.log(area)
         let zIndex = 0;
         if (params.loc) {
             this.findRoom(params.loc);

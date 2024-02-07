@@ -1,7 +1,7 @@
 /**
  * Page theme selector
  */
-
+const defaultTheme = "Sandstone"
 let templateSelector = document.querySelector("#template-selector");
 let currentTheme = localStorage.getItem("theme") ?? defaultTheme;
 let defaultDarkMode = true;
