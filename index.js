@@ -8,9 +8,11 @@ import convert from "color-convert";
 const rainbow = ["#CC99C9", "#9EC1CF", "#9EE09E", "#FDFD97", "#FEB144", "#FF6663"];
 let pathPick = 0;
 
+const defaultLanguage = document.querySelector("html").getAttribute("lang") ?? "pl";
+
 var translator = new Translator({
-    defaultLanguage: "pl",
-    detectLanguage: true,
+    defaultLanguage: defaultLanguage,
+    detectLanguage: false,
     selector: "[data-i18n]",
     debug: false,
     registerGlobally: "__",
@@ -22,13 +24,13 @@ window.translator = translator;
 
 if (location.hostname !== "") {
     translator
-        .fetch(["pl"], false)
+        .fetch([defaultLanguage], false)
         .then(json => {
             let defaultLanguage = {};
             document.querySelectorAll("[data-i18n]").forEach(item => {
                 defaultLanguage[item.getAttribute("data-i18n")] = item.innerHTML;
             });
-            translator.add("pl", {...defaultLanguage, ...json});
+            translator.add(defaultLanguage, {...defaultLanguage, ...json});
         })
         .catch(e => console.log(`Cannot fetch translations. ${e.message}`));
 
@@ -694,7 +696,7 @@ class PageControls {
 
     populateSettings(settings) {
         for (let setting in settings) {
-            let input = this.settingsModal.querySelector("input[name='" + setting + "']");
+            let input = this.settingsModal.querySelector("#nav-map").querySelector("input[name='" + setting + "']");
             if (!input) {
                 continue;
             }
