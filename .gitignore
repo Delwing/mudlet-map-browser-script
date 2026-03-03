@@ -3,3 +3,6 @@ dist.js
 bundle.js
 bundle.min.js
 node_modules
+
+.idea
+.claude

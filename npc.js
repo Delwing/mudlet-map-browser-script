@@ -29,7 +29,7 @@ const downloadNpc = () => {
                         roomNpc[npc.loc] = [];
                     }
                     roomNpc[npc.loc].push(npc.name);
-                    npcs[npc.name] = npcs[npc.name] && npcs[npc.name].indexOf(npc.loc) == -1 ? npcs[npc.name].concat([npc.loc]) : [npc.loc];
+                    npcs[npc.name] = npcs[npc.name] && npcs[npc.name].indexOf(npc.loc) === -1 ? npcs[npc.name].concat([npc.loc]) : [npc.loc];
                 });
                 resolve(roomNpc);
             });
@@ -73,7 +73,7 @@ ac = new autoComplete({
 
 let shouldNavigate = true;
 
-document.querySelector(searchFieldSelector).addEventListener("selection", function (event) {
+document.querySelector(searchFieldSelector)?.addEventListener("selection", function (event) {
     if (event.detail.selection.value instanceof Function) {
         event.detail.selection.value();
     } else {
@@ -84,8 +84,8 @@ document.querySelector(searchFieldSelector).addEventListener("selection", functi
     }
 });
 
-document.querySelector(searchFieldSelector).addEventListener("keyup", event => {
-    if (event.keyCode == 13) {
+document.querySelector(searchFieldSelector)?.addEventListener("keyup", event => {
+    if (event.keyCode === 13) {
         if (shouldNavigate) {
             ac.select(0);
         }
@@ -95,11 +95,11 @@ document.querySelector(searchFieldSelector).addEventListener("keyup", event => {
     }
 });
 
-document.querySelector(searchFieldSelector).addEventListener("navigate", event => {
+document.querySelector(searchFieldSelector)?.addEventListener("navigate", event => {
     shouldNavigate = false;
 });
 
-document.querySelector(searchFieldSelector).addEventListener("results", function (event) {
+document.querySelector(searchFieldSelector)?.addEventListener("results", function (event) {
     let list = event.detail.results;
 
     let length = list.length;
@@ -134,7 +134,7 @@ document.querySelector(searchFieldSelector).addEventListener("results", function
     event.detail.results = list;
 });
 
-searchField.addEventListener("input", event => {
+searchField?.addEventListener("input", event => {
     maxResults = defaultMaxResults;
 });
 

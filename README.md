@@ -10,10 +10,10 @@ To include script in page you can use [JSDelivr](https://www.jsdelivr.com/packag
 
 Latest version:
 ```
-https://cdn.jsdelivr.net/npm/mudlet-map-browser-script/dist/bundle.min.js
+https://cdn.jsdelivr.net/npm/mudlet-map-browser-script/dist/index.min.js
 ```
 
 Specific version
 ```
-https://cdn.jsdelivr.net/npm/mudlet-map-browser-script@0.0.2/dist/bundle.min.js
+https://cdn.jsdelivr.net/npm/mudlet-map-browser-script@0.0.2/dist/index.min.js
 ```

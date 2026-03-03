@@ -1,6 +1,6 @@
 import Translator from "@andreasremdt/simple-translator";
 import bootstrap from "bootstrap";
-import {MapReader, Renderer, Settings} from "mudlet-map-renderer";
+import {MapReader, Settings, Renderer} from "mudlet-map-renderer";
 import {Preview} from "./preview";
 import {downloadTags, downloadVersion} from "./versions";
 import convert from "color-convert";
@@ -211,11 +211,19 @@ class PageControls {
         });
 
         this.paths = {};
+
+        this.renderer = new Renderer(this.map, this.reader, this.reader.getColors(), this.settings);
     }
 
     init() {
+        // Check if version parameter is present
+        if (params.version && this.versions) {
+            this.replaceVersion(params.version);
+            history.replaceState(null, null, url);
+            return;
+        }
+
         let area = this.reader.getAreas()[0].areaId;
-        console.log(area)
         let zIndex = 0;
         if (params.loc) {
             this.findRoom(params.loc);
@@ -283,7 +291,7 @@ class PageControls {
                 if (this.renderer) {
                     this.renderer.clear();
                 }
-                this.renderer = new Renderer(this.map, this.reader, area, this.reader.getColors(), this.settings);
+                this.renderer.renderArea(area)
                 this.select.value = areaId;
                 this.populateLevelButtons(area.getLevels(), zIndex);
                 this.hideRoomInfo();

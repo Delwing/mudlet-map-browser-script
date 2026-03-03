@@ -1,10 +1,14 @@
 {
     "name": "mudlet-map-browser-script",
-    "version": "0.0.13",
-    "main": "index.js",
+    "version": "0.1.1",
+    "main": "dist/index.min.js",
+    "type": "module",
     "license": "MIT",
     "scripts": {
-        "prepublish": "browserify index.js | uglifyjs -cm > dist/bundle.min.js"
+        "build": "vite build",
+        "watch": "vite build --config vite.watch.config.ts",
+        "dev": "vite",
+        "typecheck": "tsc --noEmit"
     },
     "dependencies": {
         "@andreasremdt/simple-translator": "^2.0.4",
@@ -12,40 +16,14 @@
         "@tarekraafat/autocomplete.js": "^10.2.7",
         "bootstrap": "^5.2.3",
         "bootstrap-autocomplete": "^2.3.7",
-        "color-convert": "^2.0.1",
-        "mudlet-map-renderer": "^0.0.25"
+        "mudlet-map-renderer": "0.26.0-konva"
     },
     "devDependencies": {
-        "@babel/core": "^7.15.0",
-        "@babel/preset-env": "^7.15.0",
-        "babelify": "^10.0.0",
-        "browserify": "^17.0.0",
-        "uglify-js": "^3.17.4",
-        "watchify": "^4.0.0"
-    },
-    "browserify": {
-        "transform": [
-            [
-                "babelify",
-                {
-                    "presets": [
-                        [
-                            "@babel/preset-env",
-                            {
-                                "useBuiltIns": "entry",
-                                "corejs": "2",
-                                "targets": {
-                                    "firefox": "60",
-                                    "chrome": "61"
-                                }
-                            }
-                        ]
-                    ]
-                }
-            ]
-        ]
+        "terser": "^5.36.0",
+        "typescript": "^5.6.3",
+        "vite": "^7"
     },
     "files": [
-        "dist/bundle.min.js"
+        "dist"
     ]
 }
