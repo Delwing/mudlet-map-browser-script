@@ -5,7 +5,7 @@
  * indicator that reflects the current zoom level and pan position.
  */
 
-import type {Renderer, ViewportBounds} from "mudlet-map-renderer";
+import type {MapRenderer, ViewportBounds} from "mudlet-map-renderer";
 
 const MAX_SIZE = 400;
 
@@ -81,7 +81,7 @@ export class Preview {
             this.preview.style.opacity = "0";
         }, 4000);
 
-        const renderer: Renderer = this.pageControls.renderer;
+        const renderer: MapRenderer = this.pageControls.renderer;
         if (!renderer || !this.areaBounds) {
             return;
         }

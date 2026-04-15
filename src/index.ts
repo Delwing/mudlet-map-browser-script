@@ -1,6 +1,6 @@
 import Translator from "@andreasremdt/simple-translator";
 import {Modal, Toast} from "bootstrap";
-import {MapReader, Renderer, createSettings, PathFinder} from "mudlet-map-renderer";
+import {MapReader, MapRenderer, createSettings, PathFinder, KonvaBackend, SketchyBackend, colorLightness} from "mudlet-map-renderer";
 import type {Settings, RoomClickEventDetail, RoomContextMenuEventDetail, AreaExitClickEventDetail, ZoomChangeEventDetail} from "mudlet-map-renderer";
 import {Preview} from "./preview";
 import {downloadTags, downloadVersion} from "./versions";
@@ -94,7 +94,7 @@ interface PathData {
 class PageControls {
     map: HTMLDivElement;
     reader: MapReader;
-    renderer: Renderer;
+    renderer: MapRenderer;
     pathFinder: PathFinder;
     settings: Settings;
     pageSettings: PageSettings;
@@ -129,6 +129,7 @@ class PageControls {
     selectedRoom: MapData.Room | null = null;
     paths: Record<string, PathData> = {};
     progressTimeout: ReturnType<typeof setTimeout> | undefined;
+    renderMode: string = "normal";
 
     constructor(reader: MapReader) {
         this.map = document.querySelector("#map") as HTMLDivElement;
@@ -189,6 +190,7 @@ class PageControls {
             if (parsed.preview !== undefined) this.pageSettings.preview = parsed.preview;
             if (parsed.keepZoomLevel !== undefined) this.pageSettings.keepZoomLevel = parsed.keepZoomLevel;
             if (parsed.disableKeyBinds !== undefined) this.pageSettings.disableKeyBinds = parsed.disableKeyBinds;
+            if (parsed.renderMode !== undefined) this.renderMode = parsed.renderMode;
         }
 
         this.map.addEventListener("roomclick", ((event: CustomEvent<RoomClickEventDetail>) => {
@@ -332,10 +334,51 @@ class PageControls {
             });
         });
 
-        this.renderer = new Renderer(this.map, this.reader, this.settings);
+        this.renderer = new MapRenderer(this.reader, this.settings, this.map);
+    }
+
+    getEffectiveBackground(): string {
+        return this.renderMode === "pencil" ? '#ffffff' : this.settings.backgroundColor;
+    }
+
+    applyBackground() {
+        const bg = this.getEffectiveBackground();
+        document.querySelector("body")!.style.background = bg;
+        this.map.style.backgroundColor = bg;
+        // Also override any child divs the renderer may have created
+        for (const child of Array.from(this.map.children) as HTMLElement[]) {
+            child.style.backgroundColor = bg;
+        }
+        const isLight = colorLightness(bg) > 0.5;
+        const filter = isLight ? 'invert(1)' : '';
+        const logo = document.getElementById("logo");
+        const title = document.getElementById("title");
+        if (logo) logo.style.filter = filter;
+        if (title) title.style.filter = filter;
+    }
+
+    applyRenderMode(mode: string) {
+        this.renderMode = mode;
+        this.settings.frameMode = mode === "frame";
+        this.settings.coloredMode = mode === "colored";
+
+        if (mode === "pencil") {
+            const jitter = this.settings.lineWidth * 0.6;
+            this.renderer.setDrawingBackend(new SketchyBackend(new KonvaBackend(), jitter, '#444444'));
+        } else {
+            this.renderer.setDrawingBackend(new KonvaBackend());
+        }
+
+        this.renderer.refresh();
+        this.applyBackground();
     }
 
     init() {
+        // Apply saved render mode after renderer is ready
+        if (this.renderMode !== "normal") {
+            this.applyRenderMode(this.renderMode);
+        }
+
         if (params.version && this.versions) {
             this.replaceVersion(params.version);
             history.replaceState(null, "", url);
@@ -380,6 +423,14 @@ class PageControls {
             if (name) formData[name] = element.value;
         });
 
+        // Handle merged label render mode (data-transparent → data + transparentLabels)
+        if (formData.labelRenderMode === "data-transparent") {
+            formData.labelRenderMode = "data";
+            formData.transparentLabels = true;
+        } else if (formData.labelRenderMode !== undefined) {
+            formData.transparentLabels = false;
+        }
+
         // Apply renderer settings (only known keys)
         const defaults = createSettings();
         for (const key of Object.keys(defaults)) {
@@ -392,6 +443,11 @@ class PageControls {
         if (formData.keepZoomLevel !== undefined) this.pageSettings.keepZoomLevel = formData.keepZoomLevel;
         if (formData.disableKeyBinds !== undefined) this.pageSettings.disableKeyBinds = formData.disableKeyBinds;
 
+        // Handle render mode (maps to frameMode/coloredMode/pencil)
+        if (formData.renderMode !== undefined) {
+            this.applyRenderMode(formData.renderMode);
+        }
+
         this.showToast(translator.translateForKey("settings-saved", translator.currentLanguage));
         Modal.getInstance(this.settingsModal)?.hide();
         this.saveSettings();
@@ -402,6 +458,7 @@ class PageControls {
         localStorage.setItem("settings", JSON.stringify({
             ...this.settings,
             ...this.pageSettings,
+            renderMode: this.renderMode,
         }));
     }
 
@@ -415,9 +472,8 @@ class PageControls {
             this.zIndex = zIndex;
 
             localStorage.setItem("position", JSON.stringify({area: areaId, zIndex: zIndex}));
-            document.querySelector("body")!.style.background = this.settings.backgroundColor;
-
             this.renderer.updateBackground();
+            this.applyBackground();
             this.renderer.drawArea(areaId, zIndex);
             this.renderer.fitArea();
 
@@ -864,7 +920,11 @@ class PageControls {
     }
 
     populateSettings() {
-        const allSettings: Record<string, any> = {...this.settings, ...this.pageSettings};
+        const allSettings: Record<string, any> = {...this.settings, ...this.pageSettings, renderMode: this.renderMode};
+        // Merge transparentLabels back into labelRenderMode for the select
+        if (allSettings.labelRenderMode === "data" && allSettings.transparentLabels) {
+            allSettings.labelRenderMode = "data-transparent";
+        }
         const mapTab = this.settingsModal.querySelector("#nav-map");
         if (!mapTab) return;
 
@@ -896,6 +956,7 @@ class PageControls {
             preview: true,
             keepZoomLevel: false,
             disableKeyBinds: false,
+            renderMode: "normal",
         };
         const mapTab = this.settingsModal.querySelector("#nav-map");
         if (!mapTab) return;
@@ -1031,7 +1092,8 @@ class PageControls {
         downloadVersion(tag, this.versions!.getAttribute("data-files")!).then(data => {
             this.reader = new MapReader(data as MapData.Map, colors);
             this.pathFinder = new PathFinder(this.reader);
-            this.renderer = new Renderer(this.map, this.reader, this.settings);
+            this.renderer = new MapRenderer(this.reader, this.settings, this.map);
+            if (this.renderMode !== "normal") this.applyRenderMode(this.renderMode);
             this.populateSelectBox();
             this.renderArea(this.areaId, this.zIndex, true);
             this.showToast(`Przeladowano wersje na ${tag}`);

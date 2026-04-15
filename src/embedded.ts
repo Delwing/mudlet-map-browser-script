@@ -1,4 +1,4 @@
-import {MapReader, Renderer, createSettings, PathFinder} from "mudlet-map-renderer";
+import {MapReader, MapRenderer, createSettings, PathFinder} from "mudlet-map-renderer";
 
 const polishToEnglish: Record<string, string> = {
     ["polnoc"]: "north",
@@ -51,7 +51,7 @@ function getShortDir(dir: string): string {
 class EmbeddedMap {
     map: HTMLDivElement;
     reader: MapReader;
-    renderer: Renderer;
+    renderer: MapRenderer;
     pathFinder: PathFinder;
     gmcpPosition: any;
     event: EventTarget;
@@ -64,7 +64,7 @@ class EmbeddedMap {
         this.reader = new MapReader(mapData, colors);
 
         const settings = createSettings();
-        this.renderer = new Renderer(this.map, this.reader, settings);
+        this.renderer = new MapRenderer(this.reader, settings, this.map);
         this.pathFinder = new PathFinder(this.reader);
         this.gmcpPosition = {};
         this.event = new EventTarget();

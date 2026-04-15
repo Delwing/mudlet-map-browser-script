@@ -1,13 +1,13 @@
-import {Renderer, createSettings, MapReader} from "mudlet-map-renderer";
+import {MapRenderer, createSettings, MapReader} from "mudlet-map-renderer";
 
 const reader = new MapReader(mapData, colors);
 const settings = createSettings();
 settings.areaName = false;
 
-const renderer = new Renderer(
-    document.getElementById("map") as HTMLDivElement,
+const renderer = new MapRenderer(
     reader,
     settings,
+    document.getElementById("map") as HTMLDivElement,
 );
 
 (window as any).MapControls = {
