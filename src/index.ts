@@ -598,6 +598,29 @@ class PageControls {
         this.preview.init(bounds, canvas.toDataURL('image/png'));
     }
 
+    private readMapInsets(): { top: number; right: number; bottom: number; left: number } {
+        // CSS custom properties are returned as their declared value (e.g. "calc(...)") rather
+        // than resolved pixels, so route them through a hidden probe whose real properties get
+        // computed by the browser.
+        const probe = document.createElement("div");
+        probe.style.cssText =
+            "position:absolute;visibility:hidden;pointer-events:none;width:0;height:0;" +
+            "padding-top:var(--map-top-inset,0px);" +
+            "padding-right:var(--map-right-inset,0px);" +
+            "padding-bottom:var(--map-bottom-inset,0px);" +
+            "padding-left:var(--map-left-inset,0px);";
+        document.body.appendChild(probe);
+        const computed = getComputedStyle(probe);
+        const insets = {
+            top: parseFloat(computed.paddingTop) || 0,
+            right: parseFloat(computed.paddingRight) || 0,
+            bottom: parseFloat(computed.paddingBottom) || 0,
+            left: parseFloat(computed.paddingLeft) || 0,
+        };
+        probe.remove();
+        return insets;
+    }
+
     saveSettings() {
         localStorage.setItem("settings", JSON.stringify({
             ...this.settings,
@@ -619,7 +642,7 @@ class PageControls {
             this.renderer.updateBackground();
             this.applyBackground();
             this.renderer.drawArea(areaId, zIndex);
-            this.renderer.fitArea();
+            this.renderer.fitArea(this.readMapInsets());
 
             // Capture preview data at fitArea() state before any zoom override
             const previewBounds = this.renderer.getViewportBounds();
