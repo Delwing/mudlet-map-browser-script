@@ -70,7 +70,8 @@ const ac = new autoComplete({
         tag: "div",
         class: "npc-autocomplete dropdown-menu show",
         maxResults: undefined,
-        destination: "#search .advancedAutoComplete",
+        destination: "[data-autocomplete-target]",
+        position: "beforeend",
     },
     submit: false,
 });

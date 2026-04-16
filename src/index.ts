@@ -248,7 +248,7 @@ class PageControls {
         this.helpModal = document.querySelector("#help")!;
         this.zoomBar = document.querySelector(".progress-container")!;
         this.settingsModal = document.querySelector("#settings")!;
-        this.settingsForm = document.querySelector("#settings form") as HTMLFormElement;
+        this.settingsForm = document.querySelector("[data-settings-form]") as HTMLFormElement;
         this.resetSettingsButton = document.querySelector("#settings button[type='reset']")!;
         this.versions = document.querySelector("#versions") as HTMLSelectElement | null;
         this.releaseDescription = document.querySelector(".release-description")!;
@@ -312,12 +312,20 @@ class PageControls {
         });
 
         this.searchModal.addEventListener("shown.bs.modal", () => {
-            (this.searchModal.querySelector("input") as HTMLInputElement)?.focus();
+            this.searchModal.querySelector<HTMLInputElement>("[data-search-input]")?.focus();
+        });
+
+        this.searchModal.addEventListener("hidden.bs.modal", () => {
+            const input = this.searchModal.querySelector<HTMLInputElement>("[data-search-input]");
+            if (input && input.value) {
+                input.value = "";
+                input.dispatchEvent(new Event("input", {bubbles: true}));
+            }
         });
 
         this.settingsModal.addEventListener("show.bs.modal", () => {
             this.populateSettings();
-            const isoGroup = document.getElementById("iso-rotation-group");
+            const isoGroup = document.querySelector<HTMLElement>("[data-iso-rotation-group]");
             if (isoGroup) isoGroup.style.display = this.renderMode.startsWith("isometric") ? "" : "none";
         });
 
@@ -354,6 +362,18 @@ class PageControls {
                 if (!input) return;
                 input.value = input.defaultValue;
                 input.dispatchEvent(new Event("change", {bubbles: true}));
+            });
+        });
+
+        document.querySelectorAll<HTMLButtonElement>("[data-clear-input]").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const targetId = btn.getAttribute("data-clear-input");
+                if (!targetId) return;
+                const input = document.getElementById(targetId) as HTMLInputElement | null;
+                if (!input) return;
+                input.value = "";
+                input.dispatchEvent(new Event("input", {bubbles: true}));
+                input.focus();
             });
         });
 
@@ -463,7 +483,7 @@ class PageControls {
         this.applyBackground();
 
         // Show/hide iso rotation control
-        const isoGroup = document.getElementById("iso-rotation-group");
+        const isoGroup = document.querySelector<HTMLElement>("[data-iso-rotation-group]");
         if (isoGroup) isoGroup.style.display = mode.startsWith("isometric") ? "" : "none";
     }
 
@@ -500,7 +520,7 @@ class PageControls {
     applyCurrentSettings() {
         const formData: Record<string, any> = {};
 
-        this.settingsModal.querySelectorAll<HTMLInputElement>("#nav-map input").forEach(element => {
+        this.settingsForm.querySelectorAll<HTMLInputElement>("input[name]").forEach(element => {
             const name = element.getAttribute("name");
             if (!name) return;
             const type = element.getAttribute("type");
@@ -513,7 +533,7 @@ class PageControls {
             }
         });
 
-        this.settingsModal.querySelectorAll<HTMLSelectElement>("#nav-map select[name]").forEach(element => {
+        this.settingsForm.querySelectorAll<HTMLSelectElement>("select[name]").forEach(element => {
             const name = element.getAttribute("name");
             if (name) formData[name] = element.value;
         });
@@ -1056,7 +1076,7 @@ class PageControls {
         // Show user's color preferences in pickers, not the mode-overridden values
         if (this.pageSettings.userBackgroundColor) allSettings.backgroundColor = this.pageSettings.userBackgroundColor;
         if (this.pageSettings.userLineColor) allSettings.lineColor = this.pageSettings.userLineColor;
-        const mapTab = this.settingsModal.querySelector("#nav-map");
+        const mapTab = this.settingsForm;
         if (!mapTab) return;
 
         for (const setting in allSettings) {
@@ -1090,7 +1110,7 @@ class PageControls {
             disableKeyBinds: false,
             renderMode: "normal",
         };
-        const mapTab = this.settingsModal.querySelector("#nav-map");
+        const mapTab = this.settingsForm;
         if (!mapTab) return;
 
         for (const setting in allDefaults) {
