@@ -192,7 +192,7 @@ fsevents@~2.3.3:
   resolved "https://registry.yarnpkg.com/fsevents/-/fsevents-2.3.3.tgz#cac6407785d03675a2a5e1a5305c697b347d90d6"
   integrity sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==
 
-konva@^10.2.3:
+konva@^10.2.4:
   version "10.2.5"
   resolved "https://registry.yarnpkg.com/konva/-/konva-10.2.5.tgz#9b1be6c0392dbf0f1d29ba3439adce46016817b5"
   integrity sha512-WwBoe/EBhFcv+seL1Wnp3OAOwOFjCY4nCCgpLRrzUzw1IX4lKf/lYhj2Z3qo9P9q2fA3h+OdGDlimSNqZJaY5A==
@@ -271,12 +271,12 @@ lightningcss@^1.32.0:
     lightningcss-win32-arm64-msvc "1.32.0"
     lightningcss-win32-x64-msvc "1.32.0"
 
-mudlet-map-renderer@0.28.0-konva:
-  version "0.28.0-konva"
-  resolved "https://registry.yarnpkg.com/mudlet-map-renderer/-/mudlet-map-renderer-0.28.0-konva.tgz#71fe49d88983b31a3fa9f66f4079574f2b47dc9d"
-  integrity sha512-7BFDgH8Qu/VKiPaA7e8RsN/xTte1R0pOWLtTGbOL1ZBsMzngInTNPNB1QEQcFfGg/qLRbxCUUg6u4fdak00kBw==
+mudlet-map-renderer@0.29.2-konva:
+  version "0.29.2-konva"
+  resolved "https://registry.yarnpkg.com/mudlet-map-renderer/-/mudlet-map-renderer-0.29.2-konva.tgz#cd7f7ad532adfe41705873c5dc8cceb1e58a8e07"
+  integrity sha512-Q54mMF5V4SU2MVJgX1h3APgtU8u/1H+ZAkcNxu9Swmsklofy21niDIMD/QznUzFCys8TuTCIikbpAXp+z0GaSA==
   dependencies:
-    konva "^10.2.3"
+    konva "^10.2.4"
     node-dijkstra "^2.5.1"
 
 nanoid@^3.3.11:
