@@ -106,5 +106,10 @@ export class Preview {
         this.previewPan.style.top = `${clampedTop}%`;
         this.previewPan.style.width = `${Math.max(0, clampedRight - clampedLeft)}%`;
         this.previewPan.style.height = `${Math.max(0, clampedBottom - clampedTop)}%`;
+
+        this.previewPan.style.borderLeftStyle = left < 0 ? "none" : "";
+        this.previewPan.style.borderTopStyle = top < 0 ? "none" : "";
+        this.previewPan.style.borderRightStyle = left + width > 100 ? "none" : "";
+        this.previewPan.style.borderBottomStyle = top + height > 100 ? "none" : "";
     }
 }

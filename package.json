@@ -1,6 +1,6 @@
 {
     "name": "mudlet-map-browser-script",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "main": "dist/index.min.js",
     "type": "module",
     "license": "MIT",
