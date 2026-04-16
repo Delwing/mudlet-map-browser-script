@@ -271,10 +271,10 @@ lightningcss@^1.32.0:
     lightningcss-win32-arm64-msvc "1.32.0"
     lightningcss-win32-x64-msvc "1.32.0"
 
-mudlet-map-renderer@0.29.2-konva:
-  version "0.29.2-konva"
-  resolved "https://registry.yarnpkg.com/mudlet-map-renderer/-/mudlet-map-renderer-0.29.2-konva.tgz#cd7f7ad532adfe41705873c5dc8cceb1e58a8e07"
-  integrity sha512-Q54mMF5V4SU2MVJgX1h3APgtU8u/1H+ZAkcNxu9Swmsklofy21niDIMD/QznUzFCys8TuTCIikbpAXp+z0GaSA==
+mudlet-map-renderer@0.30.0-konva:
+  version "0.30.0-konva"
+  resolved "https://registry.yarnpkg.com/mudlet-map-renderer/-/mudlet-map-renderer-0.30.0-konva.tgz#2b7d49d6740b1be15bb6f1d1454fdabe16fcba9c"
+  integrity sha512-ZRO7Yne2Oip/zWtNzwPSKd4b8uJKjob6LKOoZlK7v1pBH5B1W5Kxg7phsOOQQEUp6bfyuFedLXXU1xjff+nPTA==
   dependencies:
     konva "^10.2.4"
     node-dijkstra "^2.5.1"

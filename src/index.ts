@@ -1,6 +1,7 @@
 import Translator from "@andreasremdt/simple-translator";
 import {Modal, Toast} from "bootstrap";
-import {MapReader, MapRenderer, createSettings, PathFinder, KonvaBackend, SketchyBackend, colorLightness} from "mudlet-map-renderer";
+import {MapReader, MapRenderer, createSettings, PathFinder, KonvaBackend, SketchyBackend, ParchmentBackend, BlueprintBackend, NeonBackend, IsometricBackend} from "mudlet-map-renderer";
+import type {DrawingBackend} from "mudlet-map-renderer";
 import type {Settings, RoomClickEventDetail, RoomContextMenuEventDetail, AreaExitClickEventDetail, ZoomChangeEventDetail} from "mudlet-map-renderer";
 import {Preview} from "./preview";
 import {downloadTags, downloadVersion} from "./versions";
@@ -84,6 +85,9 @@ interface PageSettings {
     preview: boolean;
     keepZoomLevel: boolean;
     disableKeyBinds: boolean;
+    isoRotation: number;
+    userBackgroundColor?: string;
+    userLineColor?: string;
 }
 
 interface PathData {
@@ -141,6 +145,7 @@ class PageControls {
             preview: true,
             keepZoomLevel: false,
             disableKeyBinds: false,
+            isoRotation: 30,
         };
 
         const loaded = localStorage.getItem("settings");
@@ -156,6 +161,9 @@ class PageControls {
             if (parsed.exitsSize !== undefined && parsed.lineWidth === undefined) {
                 parsed.lineWidth = parsed.exitsSize;
             }
+            // Coerce numeric settings that may have been stored as strings
+            if (typeof parsed.roomSize === "string") parsed.roomSize = parseFloat(parsed.roomSize);
+            if (typeof parsed.lineWidth === "string") parsed.lineWidth = parseFloat(parsed.lineWidth);
             if (parsed.isRound !== undefined && parsed.roomShape === undefined) {
                 parsed.roomShape = parsed.isRound ? "circle" : "rectangle";
             }
@@ -190,6 +198,9 @@ class PageControls {
             if (parsed.preview !== undefined) this.pageSettings.preview = parsed.preview;
             if (parsed.keepZoomLevel !== undefined) this.pageSettings.keepZoomLevel = parsed.keepZoomLevel;
             if (parsed.disableKeyBinds !== undefined) this.pageSettings.disableKeyBinds = parsed.disableKeyBinds;
+            if (parsed.isoRotation !== undefined) this.pageSettings.isoRotation = parseFloat(parsed.isoRotation);
+            if (parsed.userBackgroundColor !== undefined) this.pageSettings.userBackgroundColor = parsed.userBackgroundColor;
+            if (parsed.userLineColor !== undefined) this.pageSettings.userLineColor = parsed.userLineColor;
             if (parsed.renderMode !== undefined) this.renderMode = parsed.renderMode;
         }
 
@@ -306,6 +317,8 @@ class PageControls {
 
         this.settingsModal.addEventListener("show.bs.modal", () => {
             this.populateSettings();
+            const isoGroup = document.getElementById("iso-rotation-group");
+            if (isoGroup) isoGroup.style.display = this.renderMode.startsWith("isometric") ? "" : "none";
         });
 
         this.settingsModal.addEventListener("shown.bs.modal", () => {
@@ -314,16 +327,38 @@ class PageControls {
 
         this.settingsForm.addEventListener("submit", event => {
             event.preventDefault();
-            this.handleSaveSettings();
         });
 
-        this.resetSettingsButton.addEventListener("click", event => {
+        let applyScheduled = false;
+        const scheduleApply = () => {
+            if (applyScheduled || this.suppressSettingsApply) return;
+            applyScheduled = true;
+            requestAnimationFrame(() => {
+                applyScheduled = false;
+                this.applyCurrentSettings();
+            });
+        };
+        this.settingsForm.addEventListener("input", scheduleApply);
+        this.settingsForm.addEventListener("change", scheduleApply);
+
+        this.resetSettingsButton?.addEventListener("click", event => {
             event.preventDefault();
             this.resetSettings();
         });
 
+        this.settingsModal.querySelectorAll<HTMLButtonElement>(".color-reset").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const targetId = btn.getAttribute("data-target");
+                if (!targetId) return;
+                const input = this.settingsModal.querySelector<HTMLInputElement>(`#${targetId}`);
+                if (!input) return;
+                input.value = input.defaultValue;
+                input.dispatchEvent(new Event("change", {bubbles: true}));
+            });
+        });
+
         this.areaModal?.addEventListener("show.bs.modal", () => {
-            this.populateAreaInfo(this.areaId, this.zIndex);
+            this.populateAreaInfo(this.areaId);
         });
 
         this.translatePage();
@@ -343,35 +378,95 @@ class PageControls {
 
     applyBackground() {
         const bg = this.getEffectiveBackground();
-        document.querySelector("body")!.style.background = bg;
         this.map.style.backgroundColor = bg;
         // Also override any child divs the renderer may have created
         for (const child of Array.from(this.map.children) as HTMLElement[]) {
             child.style.backgroundColor = bg;
         }
-        const isLight = colorLightness(bg) > 0.5;
-        const filter = isLight ? 'invert(1)' : '';
-        const logo = document.getElementById("logo");
-        const title = document.getElementById("title");
-        if (logo) logo.style.filter = filter;
-        if (title) title.style.filter = filter;
     }
 
     applyRenderMode(mode: string) {
-        this.renderMode = mode;
-        this.settings.frameMode = mode === "frame";
-        this.settings.coloredMode = mode === "colored";
-
-        if (mode === "pencil") {
-            const jitter = this.settings.lineWidth * 0.6;
-            this.renderer.setDrawingBackend(new SketchyBackend(new KonvaBackend(), jitter, '#444444'));
-        } else {
-            this.renderer.setDrawingBackend(new KonvaBackend());
+        // First time: capture current colors as user's preference if not already saved
+        if (this.pageSettings.userBackgroundColor === undefined) {
+            this.pageSettings.userBackgroundColor = this.settings.backgroundColor;
+        }
+        if (this.pageSettings.userLineColor === undefined) {
+            this.pageSettings.userLineColor = this.settings.lineColor;
         }
 
+        this.renderMode = mode;
+
+        // Restore user's preferences before applying new mode (so we don't accumulate overrides)
+        this.settings.backgroundColor = this.pageSettings.userBackgroundColor;
+        this.settings.lineColor = this.pageSettings.userLineColor;
+        this.settings.fontFamily = createSettings().fontFamily;
+
+        const jitter = this.settings.lineWidth * 0.6;
+        const rotation = this.pageSettings.isoRotation;
+        type BackendFactory = (inner: DrawingBackend) => DrawingBackend;
+        let factory: BackendFactory = (inner) => inner;
+
+        switch (mode) {
+            case "pencil":
+                factory = (inner) => new SketchyBackend(inner, jitter, '#444444');
+                this.settings.backgroundColor = '#ffffff';
+                break;
+            case "parchment":
+                factory = (inner) => new ParchmentBackend(inner);
+                this.settings.backgroundColor = '#f4e4c1';
+                this.settings.lineColor = '#5c4033';
+                this.settings.fontFamily = 'Georgia, serif';
+                break;
+            case "parchment-pencil": {
+                const pencilColor = '#4a3728';
+                factory = (inner) => new SketchyBackend(new ParchmentBackend(inner), jitter, pencilColor);
+                this.settings.backgroundColor = '#f4e4c1';
+                this.settings.lineColor = '#5c4033';
+                this.settings.fontFamily = 'Georgia, serif';
+                break;
+            }
+            case "isometric": {
+                const depth = this.settings.roomSize * 0.3;
+                factory = (inner) => new IsometricBackend(inner, {depth, rotation});
+                break;
+            }
+            case "isometric-parchment": {
+                const depth = this.settings.roomSize * 0.3;
+                const pencilColor = '#4a3728';
+                factory = (inner) => new IsometricBackend(
+                    new SketchyBackend(new ParchmentBackend(inner), jitter, pencilColor),
+                    {depth, rotation},
+                );
+                this.settings.backgroundColor = '#f4e4c1';
+                this.settings.lineColor = '#5c4033';
+                this.settings.fontFamily = 'Georgia, serif';
+                break;
+            }
+            case "blueprint":
+                factory = (inner) => new BlueprintBackend(inner);
+                this.settings.backgroundColor = '#0a1628';
+                this.settings.lineColor = '#4a7ab5';
+                this.settings.fontFamily = '"Courier New", monospace';
+                break;
+            case "neon":
+                factory = (inner) => new NeonBackend(inner);
+                this.settings.backgroundColor = '#0a0a0f';
+                this.settings.lineColor = '#00ffaa';
+                break;
+        }
+
+        this.renderer.setDrawingBackend(factory(new KonvaBackend()));
+        this.renderer.setDrawingBackendFactory(factory);
+
+        this.renderer.updateBackground();
         this.renderer.refresh();
         this.applyBackground();
+
+        // Show/hide iso rotation control
+        const isoGroup = document.getElementById("iso-rotation-group");
+        if (isoGroup) isoGroup.style.display = mode.startsWith("isometric") ? "" : "none";
     }
+
 
     init() {
         // Apply saved render mode after renderer is ready
@@ -402,7 +497,7 @@ class PageControls {
         }
     }
 
-    handleSaveSettings() {
+    applyCurrentSettings() {
         const formData: Record<string, any> = {};
 
         this.settingsModal.querySelectorAll<HTMLInputElement>("#nav-map input").forEach(element => {
@@ -411,7 +506,7 @@ class PageControls {
             const type = element.getAttribute("type");
             if (type === "checkbox") {
                 formData[name] = element.checked;
-            } else if (type === "number") {
+            } else if (type === "number" || type === "range") {
                 formData[name] = parseFloat(element.value);
             } else {
                 formData[name] = element.value;
@@ -438,20 +533,40 @@ class PageControls {
                 (this.settings as any)[key] = formData[key];
             }
         }
+        // Track user's color preferences (so they survive mode switches)
+        if (formData.backgroundColor !== undefined) this.pageSettings.userBackgroundColor = formData.backgroundColor;
+        if (formData.lineColor !== undefined) this.pageSettings.userLineColor = formData.lineColor;
         // Update page settings
         if (formData.preview !== undefined) this.pageSettings.preview = formData.preview;
         if (formData.keepZoomLevel !== undefined) this.pageSettings.keepZoomLevel = formData.keepZoomLevel;
         if (formData.disableKeyBinds !== undefined) this.pageSettings.disableKeyBinds = formData.disableKeyBinds;
+        if (formData.isoRotation !== undefined) this.pageSettings.isoRotation = formData.isoRotation;
 
-        // Handle render mode (maps to frameMode/coloredMode/pencil)
-        if (formData.renderMode !== undefined) {
-            this.applyRenderMode(formData.renderMode);
+        // Handle roomStyle (mutually exclusive normal/frame/colored)
+        if (formData.roomStyle !== undefined) {
+            this.settings.frameMode = formData.roomStyle === "frame";
+            this.settings.coloredMode = formData.roomStyle === "colored";
         }
 
-        this.showToast(translator.translateForKey("settings-saved", translator.currentLanguage));
-        Modal.getInstance(this.settingsModal)?.hide();
+        // Handle render mode (maps to frameMode/coloredMode/pencil)
+        const isoRotationChanged = formData.isoRotation !== undefined && this.renderMode.startsWith("isometric");
+        if ((formData.renderMode !== undefined && formData.renderMode !== this.renderMode) || isoRotationChanged) {
+            this.applyRenderMode(formData.renderMode ?? this.renderMode);
+        } else {
+            this.renderer.updateBackground();
+            this.applyBackground();
+            this.renderer.refresh();
+        }
+
+        this.refreshPreview();
         this.saveSettings();
-        this.render(true);
+    }
+
+    private refreshPreview() {
+        if (!this.pageSettings.preview) return;
+        const previewBounds = this.renderer.getViewportBounds();
+        const previewPng = this.renderer.exportPng({pixelRatio: 0.25}) ?? null;
+        this.preview.init(previewBounds, previewPng);
     }
 
     saveSettings() {
@@ -560,7 +675,7 @@ class PageControls {
         });
     }
 
-    populateAreaInfo(areaId: number, zIndex: number) {
+    populateAreaInfo(areaId: number) {
         const area = this.reader.getArea(areaId);
         if (!area) return;
         this.areaModal!.querySelector(".area-name")!.innerHTML = `${area.getAreaName()} (id: ${area.getAreaId()})`;
@@ -797,8 +912,8 @@ class PageControls {
 
     showRoomInfo(room: MapData.Room) {
         const bgColor = this.reader.getColorValue(room.env);
-        this.infoBox.style.border = `2px solid ${bgColor.replace("rgb(", "rgba(").replace(")", ", 0.5)")}`;
-        this.infoBox.style.display = "initial";
+        this.infoBox.style.borderColor = bgColor.replace("rgb(", "rgba(").replace(")", ", 0.5)");
+        this.infoBox.classList.add("visible");
         this.infoBox.querySelector(".room-id")!.innerHTML = String(room.id);
         (this.infoBox.querySelector(".room-link") as HTMLAnchorElement).setAttribute("href", `${url}?loc=${room.id}`);
         this.infoBox.querySelector(".room-name")!.innerHTML = room.name;
@@ -916,15 +1031,31 @@ class PageControls {
     }
 
     hideRoomInfo() {
-        this.infoBox.style.display = "none";
+        this.infoBox.classList.remove("visible");
     }
 
+    private suppressSettingsApply = false;
+
     populateSettings() {
+        this.suppressSettingsApply = true;
+        try {
+            this.populateSettingsInner();
+        } finally {
+            this.suppressSettingsApply = false;
+        }
+    }
+
+    private populateSettingsInner() {
         const allSettings: Record<string, any> = {...this.settings, ...this.pageSettings, renderMode: this.renderMode};
         // Merge transparentLabels back into labelRenderMode for the select
         if (allSettings.labelRenderMode === "data" && allSettings.transparentLabels) {
             allSettings.labelRenderMode = "data-transparent";
         }
+        // Derive roomStyle from frame/colored mode flags
+        allSettings.roomStyle = this.settings.frameMode ? "frame" : (this.settings.coloredMode ? "colored" : "normal");
+        // Show user's color preferences in pickers, not the mode-overridden values
+        if (this.pageSettings.userBackgroundColor) allSettings.backgroundColor = this.pageSettings.userBackgroundColor;
+        if (this.pageSettings.userLineColor) allSettings.lineColor = this.pageSettings.userLineColor;
         const mapTab = this.settingsModal.querySelector("#nav-map");
         if (!mapTab) return;
 
@@ -938,6 +1069,7 @@ class PageControls {
                     input.value = toHexColor(allSettings[setting]);
                 } else {
                     input.value = allSettings[setting];
+                    input.dispatchEvent(new Event("input", {bubbles: true}));
                 }
                 continue;
             }
@@ -978,6 +1110,7 @@ class PageControls {
                 select.value = allDefaults[setting];
             }
         }
+        this.applyCurrentSettings();
     }
 
     saveImage() {
