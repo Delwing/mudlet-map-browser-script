@@ -405,6 +405,30 @@ class PageControls {
         }
     }
 
+    private applyModeColorOverrides(mode: string) {
+        switch (mode) {
+            case "pencil":
+                this.settings.backgroundColor = '#ffffff';
+                break;
+            case "parchment":
+            case "parchment-pencil":
+            case "isometric-parchment":
+                this.settings.backgroundColor = '#f4e4c1';
+                this.settings.lineColor = '#5c4033';
+                this.settings.fontFamily = 'Georgia, serif';
+                break;
+            case "blueprint":
+                this.settings.backgroundColor = '#0a1628';
+                this.settings.lineColor = '#4a7ab5';
+                this.settings.fontFamily = '"Courier New", monospace';
+                break;
+            case "neon":
+                this.settings.backgroundColor = '#0a0a0f';
+                this.settings.lineColor = '#00ffaa';
+                break;
+        }
+    }
+
     applyRenderMode(mode: string) {
         // First time: capture current colors as user's preference if not already saved
         if (this.pageSettings.userBackgroundColor === undefined) {
@@ -429,20 +453,13 @@ class PageControls {
         switch (mode) {
             case "pencil":
                 factory = (inner) => new SketchyBackend(inner, jitter, '#444444');
-                this.settings.backgroundColor = '#ffffff';
                 break;
             case "parchment":
                 factory = (inner) => new ParchmentBackend(inner);
-                this.settings.backgroundColor = '#f4e4c1';
-                this.settings.lineColor = '#5c4033';
-                this.settings.fontFamily = 'Georgia, serif';
                 break;
             case "parchment-pencil": {
                 const pencilColor = '#4a3728';
                 factory = (inner) => new SketchyBackend(new ParchmentBackend(inner), jitter, pencilColor);
-                this.settings.backgroundColor = '#f4e4c1';
-                this.settings.lineColor = '#5c4033';
-                this.settings.fontFamily = 'Georgia, serif';
                 break;
             }
             case "isometric": {
@@ -457,23 +474,17 @@ class PageControls {
                     new SketchyBackend(new ParchmentBackend(inner), jitter, pencilColor),
                     {depth, rotation},
                 );
-                this.settings.backgroundColor = '#f4e4c1';
-                this.settings.lineColor = '#5c4033';
-                this.settings.fontFamily = 'Georgia, serif';
                 break;
             }
             case "blueprint":
                 factory = (inner) => new BlueprintBackend(inner);
-                this.settings.backgroundColor = '#0a1628';
-                this.settings.lineColor = '#4a7ab5';
-                this.settings.fontFamily = '"Courier New", monospace';
                 break;
             case "neon":
                 factory = (inner) => new NeonBackend(inner);
-                this.settings.backgroundColor = '#0a0a0f';
-                this.settings.lineColor = '#00ffaa';
                 break;
         }
+
+        this.applyModeColorOverrides(mode);
 
         this.renderer.setDrawingBackend(factory(new KonvaBackend()));
         this.renderer.setDrawingBackendFactory(factory);
@@ -573,13 +584,26 @@ class PageControls {
         if ((formData.renderMode !== undefined && formData.renderMode !== this.renderMode) || isoRotationChanged) {
             this.applyRenderMode(formData.renderMode ?? this.renderMode);
         } else {
+            // Re-apply mode color overrides so form-fed user colors don't leak into the active mode
+            this.applyModeColorOverrides(this.renderMode);
             this.renderer.updateBackground();
             this.applyBackground();
             this.renderer.refresh();
         }
 
-        this.refreshPreview();
+        this.scheduleRefreshPreview();
         this.saveSettings();
+    }
+
+    private refreshPreviewTimeout: ReturnType<typeof setTimeout> | undefined;
+
+    private scheduleRefreshPreview() {
+        if (!this.pageSettings.preview) return;
+        if (this.refreshPreviewTimeout !== undefined) clearTimeout(this.refreshPreviewTimeout);
+        this.refreshPreviewTimeout = setTimeout(() => {
+            this.refreshPreviewTimeout = undefined;
+            this.refreshPreview();
+        }, 200);
     }
 
     private refreshPreview() {
