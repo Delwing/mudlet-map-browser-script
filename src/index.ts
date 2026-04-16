@@ -584,9 +584,18 @@ class PageControls {
 
     private refreshPreview() {
         if (!this.pageSettings.preview) return;
-        const previewBounds = this.renderer.getViewportBounds();
-        const previewPng = this.renderer.exportPng({pixelRatio: 0.25}) ?? null;
-        this.preview.init(previewBounds, previewPng);
+        const bounds = this.renderer.getAreaBounds();
+        if (!bounds) return;
+        const areaW = bounds.maxX - bounds.minX;
+        const areaH = bounds.maxY - bounds.minY;
+        if (areaW <= 0 || areaH <= 0) return;
+        const MAX = 400;
+        const aspect = areaW / areaH;
+        const width = aspect >= 1 ? MAX : Math.round(MAX * aspect);
+        const height = aspect >= 1 ? Math.round(MAX / aspect) : MAX;
+        const canvas: HTMLCanvasElement | undefined = this.renderer.backend.toCanvas({width, height, padding: 3});
+        if (!canvas) return;
+        this.preview.init(bounds, canvas.toDataURL('image/png'));
     }
 
     saveSettings() {
