@@ -16,7 +16,7 @@
         "@tarekraafat/autocomplete.js": "^10.2.7",
         "bootstrap": "^5.2.3",
         "bootstrap-autocomplete": "^2.3.7",
-        "mudlet-map-renderer": "^0.34.1-konva"
+        "mudlet-map-renderer": "^0.34.2-konva"
     },
     "devDependencies": {
         "terser": "^5.36.0",
