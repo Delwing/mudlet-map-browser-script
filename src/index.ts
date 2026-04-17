@@ -1,6 +1,17 @@
 import Translator from "@andreasremdt/simple-translator";
 import {Modal, Toast} from "bootstrap";
-import {MapReader, MapRenderer, createSettings, PathFinder, KonvaBackend, SketchyBackend, ParchmentBackend, BlueprintBackend, NeonBackend, IsometricBackend} from "mudlet-map-renderer";
+import {
+    MapReader,
+    MapRenderer,
+    createSettings,
+    PathFinder,
+    SketchyBackend,
+    ParchmentBackend,
+    BlueprintBackend,
+    NeonBackend,
+    IsometricBackend,
+    CanvasBackend
+} from "mudlet-map-renderer";
 import type {DrawingBackend} from "mudlet-map-renderer";
 import type {Settings, RoomClickEventDetail, RoomContextMenuEventDetail, AreaExitClickEventDetail, ZoomChangeEventDetail} from "mudlet-map-renderer";
 import {Preview} from "./preview";
@@ -486,7 +497,7 @@ class PageControls {
 
         this.applyModeColorOverrides(mode);
 
-        this.renderer.setDrawingBackend(factory(new KonvaBackend()));
+        this.renderer.setDrawingBackend(factory(new CanvasBackend()));
         this.renderer.setDrawingBackendFactory(factory);
 
         this.renderer.updateBackground();
