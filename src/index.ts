@@ -5,15 +5,18 @@ import {
     MapRenderer,
     createSettings,
     PathFinder,
-    SketchyBackend,
-    ParchmentBackend,
-    BlueprintBackend,
-    NeonBackend,
-    IsometricBackend,
-    CanvasBackend
+    Sketchy,
+    Parchment,
+    Blueprint,
+    Neon,
+    Isometric,
+    compose,
+    identityStyle,
+    PngExporter,
+    PngBlobExporter,
+    SvgExporter,
 } from "mudlet-map-renderer";
-import type {DrawingBackend} from "mudlet-map-renderer";
-import type {Settings, RoomClickEventDetail, RoomContextMenuEventDetail, AreaExitClickEventDetail, ZoomChangeEventDetail} from "mudlet-map-renderer";
+import type {Style, Settings, RoomClickEventDetail, RoomContextMenuEventDetail, AreaExitClickEventDetail, ZoomChangeEventDetail} from "mudlet-map-renderer";
 import {Preview} from "./preview";
 import {downloadTags, downloadVersion} from "./versions";
 
@@ -150,6 +153,7 @@ class PageControls {
         this.map = document.querySelector("#map") as HTMLDivElement;
         this.reader = reader;
         this.settings = createSettings();
+        this.settings.areaExitLabels = true;
         this.pathFinder = new PathFinder(this.reader);
 
         this.pageSettings = {
@@ -458,47 +462,43 @@ class PageControls {
 
         const jitter = this.settings.lineWidth * 0.6;
         const rotation = this.pageSettings.isoRotation;
-        type BackendFactory = (inner: DrawingBackend) => DrawingBackend;
-        let factory: BackendFactory = (inner) => inner;
+        let style: Style = identityStyle;
 
         switch (mode) {
             case "pencil":
-                factory = (inner) => new SketchyBackend(inner, jitter, '#444444');
+                style = Sketchy({jitter, color: '#444444'});
                 break;
             case "parchment":
-                factory = (inner) => new ParchmentBackend(inner);
+                style = Parchment;
                 break;
-            case "parchment-pencil": {
-                const pencilColor = '#4a3728';
-                factory = (inner) => new SketchyBackend(new ParchmentBackend(inner), jitter, pencilColor);
+            case "parchment-pencil":
+                style = compose(Parchment, Sketchy({jitter, color: '#4a3728'}));
                 break;
-            }
             case "isometric": {
                 const depth = this.settings.roomSize * 0.3;
-                factory = (inner) => new IsometricBackend(inner, {depth, rotation});
+                style = Isometric({depth, rotation});
                 break;
             }
             case "isometric-parchment": {
                 const depth = this.settings.roomSize * 0.3;
-                const pencilColor = '#4a3728';
-                factory = (inner) => new IsometricBackend(
-                    new SketchyBackend(new ParchmentBackend(inner), jitter, pencilColor),
-                    {depth, rotation},
+                style = compose(
+                    Parchment,
+                    Sketchy({jitter, color: '#4a3728'}),
+                    Isometric({depth, rotation}),
                 );
                 break;
             }
             case "blueprint":
-                factory = (inner) => new BlueprintBackend(inner);
+                style = Blueprint;
                 break;
             case "neon":
-                factory = (inner) => new NeonBackend(inner);
+                style = Neon;
                 break;
         }
 
         this.applyModeColorOverrides(mode);
 
-        this.renderer.setDrawingBackend(factory(new CanvasBackend()));
-        this.renderer.setDrawingBackendFactory(factory);
+        this.renderer.setStyle(style);
 
         this.renderer.updateBackground();
         this.renderer.refresh();
@@ -628,7 +628,7 @@ class PageControls {
         const aspect = areaW / areaH;
         const width = aspect >= 1 ? MAX : Math.round(MAX * aspect);
         const height = aspect >= 1 ? Math.round(MAX / aspect) : MAX;
-        const canvas: HTMLCanvasElement | undefined = this.renderer.backend.toCanvas({width, height, padding: 3});
+        const canvas = this.renderer.backend.toCanvas({width, height, padding: 3});
         if (!canvas) return;
         this.preview.init(bounds, canvas.toDataURL('image/png'));
     }
@@ -681,7 +681,7 @@ class PageControls {
 
             // Capture preview data at fitArea() state before any zoom override
             const previewBounds = this.renderer.getViewportBounds();
-            const previewPng = this.renderer.exportPng({pixelRatio: 0.25}) ?? null;
+            const previewPng = this.renderer.export(new PngExporter({pixelRatio: 0.25})) ?? null;
 
             const area = this.reader.getArea(areaId);
             this.select.value = String(areaId);
@@ -1170,6 +1170,7 @@ class PageControls {
 
     resetSettings() {
         const defaults = createSettings();
+        defaults.areaExitLabels = true;
         const allDefaults: Record<string, any> = {
             ...defaults,
             preview: true,
@@ -1201,7 +1202,7 @@ class PageControls {
     }
 
     saveImage() {
-        const pngUrl = this.renderer.exportPng();
+        const pngUrl = this.renderer.export(new PngExporter());
         if (!pngUrl) return;
         const a = document.createElement("a");
         a.setAttribute("href", pngUrl);
@@ -1212,7 +1213,7 @@ class PageControls {
     }
 
     downloadImage() {
-        const svg = this.renderer.exportSvg();
+        const svg = this.renderer.export(new SvgExporter());
         if (!svg) return;
         const a = document.createElement("a");
         a.setAttribute("href", svgToDataURL(svg));
@@ -1224,9 +1225,9 @@ class PageControls {
 
     copyImage() {
         if (typeof ClipboardItem !== "undefined") {
-            const blobPromise = this.renderer.exportPngBlob();
+            const blobPromise = this.renderer.export(new PngBlobExporter());
             if (blobPromise) {
-                blobPromise.then(blob =>
+                blobPromise.then((blob: Blob) =>
                     navigator.clipboard.write([new ClipboardItem({"image/png": blob})])
                 );
             }
