@@ -2,7 +2,6 @@
 
 declare const mapData: MapData.Map;
 declare const colors: MapData.Env[];
-declare const translations: { pl: Record<string, string>; en: Record<string, string> };
 
 declare module "@andreasremdt/simple-translator" {
     export default class Translator {

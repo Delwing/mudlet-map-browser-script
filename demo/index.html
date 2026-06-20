@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pl" data-bs-theme="dark">
+    <!--
+      Demo / dev shell for the React map browser bundle.
+
+      This is exactly the structure a host page needs: a #root mount point,
+      `window.MAP_CONFIG` pointing at the map data (here the pre-exported .json files;
+      swap to a `mapUrl` .dat to decode in-browser), and the bundle. `yarn dev` serves
+      this file via Vite and loads the app via ./main.tsx (which imports ../src/main);
+      a production host would instead use
+      <script src="index.min.js"></script> (see README "Required page structure").
+
+      CSS (Bootstrap + app styles + flag sprite) is bundled by the app itself — in
+      dev it's injected by Vite; a production host links dist/index.min.css instead.
+      Translations (Polish + English) are bundled too; only the favicon comes from
+      the live deployment.
+    -->
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+        <meta name="theme-color" content="#0a0a0f" />
+        <title>Mapa Arkadii — demo</title>
+        <link rel="shortcut icon" type="image/x-icon" href="https://delwing.github.io/arkadia-mapa/favicon.ico" />
+        <!-- Lay the React tree out as if its children were direct children of <body>. -->
+        <style>
+            #root {
+                display: contents;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="root"></div>
+        <!--
+          Host configuration. The bundle ships NO title / logo / credits defaults —
+          these Arkadia-specific values are supplied here by the host page. Must run
+          before the app module below.
+        -->
+        <script>
+            window.MAP_CONFIG = {
+                // JSON export path: two pre-exported .json arrays fetched directly
+                // (no in-browser binary decode). To decode a .dat instead, drop these
+                // two and set mapUrl to the .dat file.
+                mapDataUrl: "https://delwing.github.io/arkadia-mapa/data/mapExport.json",
+                colorsUrl: "https://delwing.github.io/arkadia-mapa/data/colors.json",
+                title: { pl: "Mapa Arkadii", en: "Arkadia Map" },
+                logo: "https://delwing.github.io/arkadia-mapa/images/logo.png",
+                credits: {
+                    author: "Dargoth",
+                    githubUrl: "https://github.com/Delwing/mudlet-map-reader",
+                    remark: {
+                        pl: "Mapa powstała przy współpracy wielu osób ze społeczności Arkadii w projekcie <b>dzordzyka</b>",
+                        en: "Map was created by many authors from Arkadia's communities in project under lead of <b>dzordzyk</b>",
+                    },
+                },
+
+                // Polish + English are bundled. To override a string or add a language,
+                // merge it here (and list new languages so they appear in the picker):
+                // translations: { en: { search: "Find" }, de: { search: "Suchen", settings: "Einstellungen" } },
+                // languages: [{ code: "pl" }, { code: "en", flag: "gb" }, { code: "de" }],
+            };
+        </script>
+        <script type="module" src="./main.tsx"></script>
+    </body>
+</html>
