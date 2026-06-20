@@ -1,8 +1,10 @@
 /**
  * Host-configurable endpoints. These used to live as data-attributes in the
  * deployment's index.html (data-npc on the search input, data-tags / data-files
- * on the version <select>). Now that the markup is bundled, they default to the
- * Arkadia deployment but can be overridden by the host page via:
+ * on the version <select>). Now that the markup is bundled, the host page supplies
+ * them via MAP_CONFIG. They are brand-neutral with NO defaults — an unset endpoint
+ * disables its feature (no NPC search, no version selector) rather than falling
+ * back to any particular deployment:
  *
  *   <script>window.MAP_CONFIG = { npcUrl: "..." }</script>
  *   <script src="index.min.js"></script>
@@ -27,9 +29,20 @@ export interface Credits {
 }
 
 export interface MapConfig {
-    npcUrl: string;
-    versionsTagsUrl: string;
-    versionsFilesUrl: string;
+    /**
+     * NPC data file (room → name list), used to make NPCs searchable. Omit it and
+     * NPC search is simply empty — only room-id search remains. No default: the
+     * bundle is brand-neutral, so leaving it unset does NOT fall back to any
+     * particular deployment's NPCs.
+     */
+    npcUrl?: string;
+    /**
+     * GitHub-releases (or compatible) endpoint listing selectable map versions.
+     * Omit it and the version selector is hidden entirely. No default.
+     */
+    versionsTagsUrl?: string;
+    /** Endpoint to fetch a specific version's map data; `%tag%` is substituted. Pairs with `versionsTagsUrl`. */
+    versionsFilesUrl?: string;
     /**
      * Map data source. Three mutually-exclusive ways to supply it, checked in
      * this order (the legacy `mapData` / `colors` globals are the final fallback):
@@ -86,10 +99,4 @@ export function resolveLocalized(value: string | Record<string, string> | undefi
     return value[lang] ?? Object.values(value)[0];
 }
 
-const defaults: MapConfig = {
-    npcUrl: "https://delwing.github.io/arkadia-mapa/data/npc.json",
-    versionsTagsUrl: "https://api.github.com/repos/Delwing/arkadia-mapa/releases?per_page=200",
-    versionsFilesUrl: "https://arkadia-mapa.delwing.workers.dev/?tag=%tag%",
-};
-
-export const config: MapConfig = {...defaults, ...((window as unknown as {MAP_CONFIG?: Partial<MapConfig>}).MAP_CONFIG ?? {})};
+export const config: MapConfig = {...((window as unknown as {MAP_CONFIG?: Partial<MapConfig>}).MAP_CONFIG ?? {})};

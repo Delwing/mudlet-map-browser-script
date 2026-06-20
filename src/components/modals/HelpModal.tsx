@@ -24,7 +24,7 @@ export function HelpModal() {
         const el = modalRef.current;
         if (!el) return;
         const onShown = () => {
-            if (tags.length === 0) {
+            if (tags.length === 0 && config.versionsTagsUrl) {
                 (downloadTags(config.versionsTagsUrl) as Promise<Tag[]>).then(loaded => {
                     setTags(loaded);
                     setDescription((loaded[0]?.body ?? "").replaceAll("\n\n", "\n"));
@@ -98,20 +98,22 @@ export function HelpModal() {
                                     )}
                                 </p>
                             )}
-                            <div>
-                                <label className="form-label" htmlFor="versions" data-i18n="switch-map-version">
-                                    {t("switch-map-version")}
-                                </label>
-                                <select id="versions" className="form-select" value={controller?.versionTag ?? ""} onChange={onVersionChange}>
-                                    {controller?.versionTag === null && tags.length === 0 && <option value=""></option>}
-                                    {tags.map(tag => (
-                                        <option key={tag.tag_name} value={tag.tag_name} data-description={(tag.body ?? "").replaceAll("\n\n", "\n")}>
-                                            {tag.tag_name}
-                                        </option>
-                                    ))}
-                                </select>
-                                <div className="release-description">{description}</div>
-                            </div>
+                            {config.versionsTagsUrl && (
+                                <div>
+                                    <label className="form-label" htmlFor="versions" data-i18n="switch-map-version">
+                                        {t("switch-map-version")}
+                                    </label>
+                                    <select id="versions" className="form-select" value={controller?.versionTag ?? ""} onChange={onVersionChange}>
+                                        {controller?.versionTag === null && tags.length === 0 && <option value=""></option>}
+                                        {tags.map(tag => (
+                                            <option key={tag.tag_name} value={tag.tag_name} data-description={(tag.body ?? "").replaceAll("\n\n", "\n")}>
+                                                {tag.tag_name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <div className="release-description">{description}</div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

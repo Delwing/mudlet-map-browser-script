@@ -768,6 +768,7 @@ export class MapController {
     }
 
     replaceVersion(tag: string) {
+        if (!config.versionsFilesUrl) return;
         downloadVersion(tag, config.versionsFilesUrl).then(data => {
             this.reader = new MapReader(data as MapData.Map, colors);
             this.pathFinder = new PathFinder(this.reader);

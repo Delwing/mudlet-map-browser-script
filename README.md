@@ -110,10 +110,10 @@ The page is configured through a `window.MAP_CONFIG` global, set **before** the 
     mapUrl: "data/map.dat",
     // ...or two JSON arrays instead: mapDataUrl: "data/mapExport.json", colorsUrl: "data/colors.json",
 
-    // Endpoints (default to the Arkadia deployment):
-    npcUrl: "...",
-    versionsTagsUrl: "...",
-    versionsFilesUrl: "...",
+    // Optional endpoints — no defaults; omit one and its feature turns off:
+    npcUrl: "...",          // makes NPCs searchable; unset → only room-id search
+    versionsTagsUrl: "...", // version selector in the Help modal; unset → hidden
+    versionsFilesUrl: "...",// fetches a selected version's map (%tag% substituted)
 
     // Branding — no defaults are baked into the bundle:
     title: { pl: "Mapa Arkadii", en: "Arkadia Map" }, // string, or per-language map

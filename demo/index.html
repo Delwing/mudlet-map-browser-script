@@ -42,6 +42,11 @@
                 // two and set mapUrl to the .dat file.
                 mapDataUrl: "https://delwing.github.io/arkadia-mapa/data/mapExport.json",
                 colorsUrl: "https://delwing.github.io/arkadia-mapa/data/colors.json",
+                // NPC search + version history are opt-in (no bundle defaults); the
+                // demo IS the Arkadia deployment, so it supplies its own endpoints.
+                npcUrl: "https://delwing.github.io/arkadia-mapa/data/npc.json",
+                versionsTagsUrl: "https://api.github.com/repos/Delwing/arkadia-mapa/releases?per_page=200",
+                versionsFilesUrl: "https://arkadia-mapa.delwing.workers.dev/?tag=%tag%",
                 title: { pl: "Mapa Arkadii", en: "Arkadia Map" },
                 logo: "https://delwing.github.io/arkadia-mapa/images/logo.png",
                 credits: {
