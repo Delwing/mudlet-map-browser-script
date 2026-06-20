@@ -1,12 +1,11 @@
 {
     "name": "mudlet-map-browser-script",
-    "version": "0.8.3",
+    "version": "0.9.0",
     "main": "dist/index.min.js",
     "type": "module",
     "license": "MIT",
     "scripts": {
         "build": "vite build",
-        "watch": "vite build --config vite.watch.config.ts",
         "dev": "vite",
         "typecheck": "tsc --noEmit"
     },
@@ -16,7 +15,7 @@
         "@tarekraafat/autocomplete.js": "^10.2.7",
         "bootstrap": "^5.2.3",
         "bootstrap-autocomplete": "^2.3.7",
-        "mudlet-map-renderer": "^0.36.0-konva"
+        "mudlet-map-renderer": "^2.4.0"
     },
     "devDependencies": {
         "terser": "^5.36.0",

@@ -10,11 +10,13 @@ import {
     Blueprint,
     Neon,
     Isometric,
+    GradientRooms,
     compose,
     identityStyle,
     PngExporter,
     PngBlobExporter,
     SvgExporter,
+    CanvasExporter,
 } from "mudlet-map-renderer";
 import type {Style, Settings, RoomClickEventDetail, RoomContextMenuEventDetail, AreaExitClickEventDetail, ZoomChangeEventDetail} from "mudlet-map-renderer";
 import {Preview} from "./preview";
@@ -494,6 +496,9 @@ class PageControls {
             case "neon":
                 style = Neon;
                 break;
+            case "gradient":
+                style = GradientRooms();
+                break;
         }
 
         this.applyModeColorOverrides(mode);
@@ -624,13 +629,32 @@ class PageControls {
         const areaW = bounds.maxX - bounds.minX;
         const areaH = bounds.maxY - bounds.minY;
         if (areaW <= 0 || areaH <= 0) return;
+
+        // Mirror the renderer's DemoPreview: render the whole area headlessly
+        // with CanvasExporter (which, unlike a live-viewport capture, doesn't
+        // depend on the current zoom/pan and always draws every room). Size from
+        // the *padded* export bounds so the thumbnail aspect matches what the
+        // exporter renders — for small areas the padding dominates and using the
+        // area-only ratio letterboxes the image and shifts the viewport
+        // indicator off.
+        const padding = 3;
+        const paddedW = areaW + 2 * padding;
+        const paddedH = areaH + 2 * padding;
         const MAX = 400;
-        const aspect = areaW / areaH;
+        const aspect = paddedW / paddedH;
         const width = aspect >= 1 ? MAX : Math.round(MAX * aspect);
         const height = aspect >= 1 ? Math.round(MAX / aspect) : MAX;
-        const canvas = this.renderer.backend.toCanvas({width, height, padding: 3});
+        const canvas = this.renderer.export(new CanvasExporter({width, height, padding}));
         if (!canvas) return;
-        this.preview.init(bounds, canvas.toDataURL('image/png'));
+
+        // Store the padded bounds so the viewport indicator maps to the same
+        // coordinate range the image was rendered with.
+        this.preview.init({
+            minX: bounds.minX - padding,
+            maxX: bounds.maxX + padding,
+            minY: bounds.minY - padding,
+            maxY: bounds.maxY + padding,
+        }, canvas.toDataURL('image/png'));
     }
 
     private readMapInsets(): { top: number; right: number; bottom: number; left: number } {
@@ -679,10 +703,6 @@ class PageControls {
             this.renderer.drawArea(areaId, zIndex);
             this.renderer.fitArea(this.readMapInsets());
 
-            // Capture preview data at fitArea() state before any zoom override
-            const previewBounds = this.renderer.getViewportBounds();
-            const previewPng = this.renderer.export(new PngExporter({pixelRatio: 0.25})) ?? null;
-
             const area = this.reader.getArea(areaId);
             this.select.value = String(areaId);
             if (area) {
@@ -698,7 +718,7 @@ class PageControls {
                 this.renderer.zoomToCenter(this.zoom);
             }
 
-            this.preview.init(previewBounds, previewPng);
+            this.refreshPreview();
             return true;
         }
         return false;
