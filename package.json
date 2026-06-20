@@ -4,6 +4,10 @@
     "main": "dist/index.min.js",
     "type": "module",
     "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Delwing/mudlet-map-browser-script.git"
+    },
     "scripts": {
         "build": "vite build",
         "dev": "vite",
