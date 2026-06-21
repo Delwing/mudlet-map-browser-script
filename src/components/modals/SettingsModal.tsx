@@ -78,7 +78,7 @@ export function SettingsModal() {
     };
 
     return (
-        <div className="modal fade" id="settings" tabIndex={-1} role="dialog" data-bs-theme="dark" data-bs-scroll="true" ref={modalRef}>
+        <div className="modal fade" id="settings" tabIndex={-1} role="dialog" data-bs-scroll="true" ref={modalRef}>
             <div className="modal-dialog" role="document">
                 <div className="modal-content">
                     <form
@@ -232,7 +232,7 @@ export function SettingsModal() {
                                                     {t("line-color")}
                                                 </label>
                                                 <div className="color-group">
-                                                    <input type="color" className="form-control form-control-color" id="lineColor" name="lineColor" defaultValue="#e1ffe1" title="Wybierz kolor linii" />
+                                                    <input type="color" className="form-control form-control-color" id="lineColor" name="lineColor" defaultValue="#e1e1e1" title="Wybierz kolor linii" />
                                                     <button type="button" className="color-reset" title="Reset" data-target="lineColor" onClick={() => onColorReset("lineColor")}>
                                                         ⟲
                                                     </button>

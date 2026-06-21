@@ -1,7 +1,7 @@
 import {
     MapReader,
     MapRenderer,
-    createSettings,
+    createSettings as createRendererSettings,
     PathFinder,
     Sketchy,
     Parchment,
@@ -32,6 +32,16 @@ import {config} from "../config";
 
 const rainbow = ["#CC99C9", "#9EC1CF", "#9EE09E", "#FDFD97", "#FEB144", "#FF6663"];
 let pathPick = 0;
+
+/** Neutral default line color, overriding the renderer's green-tinted rgb(225, 255, 225). */
+const DEFAULT_LINE_COLOR = "#e1e1e1";
+
+/** Renderer settings with this project's neutral default line color applied. */
+function createSettings(): Settings {
+    const settings = createRendererSettings();
+    settings.lineColor = DEFAULT_LINE_COLOR;
+    return settings;
+}
 
 export interface PageSettings {
     preview: boolean;

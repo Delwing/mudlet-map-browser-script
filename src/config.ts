@@ -59,6 +59,12 @@ export interface MapConfig {
     mapDataUrl?: string;
     /** JSON array of env colors (the old `colors.js` payload). Pair with `mapDataUrl`. */
     colorsUrl?: string;
+    /**
+     * UI chrome theme: "light" or "dark" (default). Set at generation time by the
+     * host page / GitHub Action — there is no in-app switcher. Drives Bootstrap's
+     * color mode and our chrome via `data-bs-theme` on <html>.
+     */
+    theme?: "light" | "dark";
     credits?: Credits;
     /**
      * Header title. A single string or a per-language map keyed by language code.
