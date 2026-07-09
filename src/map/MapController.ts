@@ -1,5 +1,4 @@
 import {
-    MapReader,
     MapRenderer,
     createSettings as createRendererSettings,
     PathFinder,
@@ -16,7 +15,9 @@ import {
     SvgExporter,
     CanvasExporter,
 } from "mudlet-map-renderer";
+import {isHashLookupCapable} from "mudlet-map-renderer";
 import type {
+    IMapReader,
     Style,
     Settings,
     RoomClickEventDetail,
@@ -29,6 +30,7 @@ import {Preview} from "../preview";
 import {downloadNpc, type RoomNpcMap} from "../data/npc";
 import {downloadVersion} from "../versions";
 import {config} from "../config";
+import {readerFromParsed, DEFAULT_BIG_MAP_THRESHOLD} from "../data/loadMapData";
 
 const rainbow = ["#CC99C9", "#9EC1CF", "#9EE09E", "#FDFD97", "#FEB144", "#FF6663"];
 let pathPick = 0;
@@ -40,6 +42,10 @@ const DEFAULT_LINE_COLOR = "#e1e1e1";
 function createSettings(): Settings {
     const settings = createRendererSettings();
     settings.lineColor = DEFAULT_LINE_COLOR;
+    // Three-tier LOD (vector -> rooms-only -> raster) kicks in only once a
+    // plane's room count/zoom crosses its budget, so this is a no-op for
+    // ordinary maps and only matters for big (skeleton-backed) ones.
+    settings.lodEnabled = true;
     return settings;
 }
 
@@ -110,7 +116,7 @@ export class MapController {
     on = this.emitter.on.bind(this.emitter);
 
     map: HTMLDivElement;
-    reader: MapReader;
+    reader: IMapReader;
     renderer!: MapRenderer;
     pathFinder: PathFinder;
     settings: Settings;
@@ -131,7 +137,7 @@ export class MapController {
     private progressTimeout: ReturnType<typeof setTimeout> | undefined;
     private suppressSettingsApply = false;
 
-    constructor(map: HTMLDivElement, reader: MapReader, options: MapControllerOptions) {
+    constructor(map: HTMLDivElement, reader: IMapReader, options: MapControllerOptions) {
         this.map = map;
         this.reader = reader;
         this.t = options.t;
@@ -385,6 +391,9 @@ export class MapController {
         if (params.loc) {
             this.findRoom(parseInt(params.loc));
             history.replaceState(null, "", url);
+        } else if (params.hash) {
+            this.findRoomByHash(params.hash);
+            history.replaceState(null, "", url);
         } else {
             if (params.area) {
                 area = parseInt(params.area);
@@ -594,7 +603,13 @@ export class MapController {
     getAreas(): AreaOption[] {
         return this.reader
             .getAreas()
-            .filter(area => area.getRooms().length > 0 && area.getAreaName() !== undefined && area.getAreaName() !== "")
+            .filter(
+                // getZLevels() works from area-level data on every IArea implementation;
+                // getRooms() is deliberately always [] on a SkeletonMapReader's IArea (it
+                // never materialises the full room list), so it can't be used as an
+                // "area has rooms" check here.
+                area => area.getZLevels().length > 0 && area.getAreaName() !== undefined && area.getAreaName() !== "",
+            )
             .sort((a, b) => {
                 const nameA = a.getAreaName().toLowerCase();
                 const nameB = b.getAreaName().toLowerCase();
@@ -644,6 +659,22 @@ export class MapController {
             this.renderer.setZoom(0.5);
             this.renderer.centerOn(id, areaChanged);
             this.selectRoom(room);
+        } else {
+            this.showToast(this.t("location-not-found"));
+        }
+    }
+
+    findRoomByHash(hash: string) {
+        if (!hash) return;
+        // getRooms() is always [] on a SkeletonMapReader (never materialises the
+        // full room list — see IMapReader docs), so a linear scan can't find
+        // anything on a big/streamed map. Prefer the reader's own hash index
+        // when it has one; fall back to the scan for readers that don't.
+        const roomId = isHashLookupCapable(this.reader)
+            ? this.reader.getRoomIdByHash(hash)
+            : this.reader.getRooms().find(r => r.hash === hash)?.id;
+        if (roomId !== undefined) {
+            this.findRoom(roomId);
         } else {
             this.showToast(this.t("location-not-found"));
         }
@@ -780,7 +811,8 @@ export class MapController {
     replaceVersion(tag: string) {
         if (!config.versionsFilesUrl) return;
         downloadVersion(tag, config.versionsFilesUrl).then(data => {
-            this.reader = new MapReader(data as MapData.Map, colors);
+            const threshold = config.bigMapThreshold ?? DEFAULT_BIG_MAP_THRESHOLD;
+            this.reader = readerFromParsed({mapData: data as MapData.Map, colors}, threshold);
             this.pathFinder = new PathFinder(this.reader);
             this.renderer = new MapRenderer(this.reader, this.settings, this.map);
             if (this.renderMode !== "normal") this.applyRenderMode(this.renderMode);

@@ -18,6 +18,7 @@ export class Preview {
 
     private areaBounds: ViewportBounds | null = null;
     private timeout: ReturnType<typeof setTimeout> | undefined;
+    private hideToken = 0;
 
     constructor(map: HTMLDivElement, pageControls: any) {
         this.map = map;
@@ -77,9 +78,23 @@ export class Preview {
 
         this.preview.style.opacity = "1";
         clearTimeout(this.timeout);
-        this.timeout = setTimeout(() => {
-            this.preview.style.opacity = "0";
-        }, 4000);
+        // update() can run synchronously mid a heavy scene rebuild (e.g. a big
+        // map's initial draw, still inside MapController.init()) — well before
+        // the browser paints anything. Starting a wall-clock 4s countdown right
+        // then can burn most (or all) of it before the user ever sees the
+        // "visible" frame, making the preview look like it never appeared.
+        // Schedule the hide relative to actual paint instead: a single
+        // requestAnimationFrame fires before that frame's paint step, so a
+        // second one is needed to land after it.
+        const token = ++this.hideToken;
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                if (token !== this.hideToken) return; // superseded by a later update()
+                this.timeout = setTimeout(() => {
+                    this.preview.style.opacity = "0";
+                }, 4000);
+            });
+        });
 
         const renderer: MapRenderer = this.pageControls.renderer;
         if (!renderer || !this.areaBounds) {

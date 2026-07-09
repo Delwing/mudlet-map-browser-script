@@ -94,6 +94,9 @@ export const pl: Record<string, string> = {
     delete: "Usuń",
     "no-path": "Nie udało się znaleźć ścieżki",
     mapLoadError: "Nie udało się wczytać danych mapy.",
+    mapLoadingStreaming: "Wczytywanie pokoi…",
+    mapLoadingFinalizing: "Finalizowanie…",
+    mapLoadingBuilding: "Budowanie mapy…",
 };
 
 /** Baked English dictionary. Brand-neutral (no Arkadia title/remark). */
@@ -183,6 +186,9 @@ export const en: Record<string, string> = {
     delete: "Delete",
     "no-path": "Could not find path",
     mapLoadError: "Failed to load map data.",
+    mapLoadingStreaming: "Loading rooms…",
+    mapLoadingFinalizing: "Finalizing…",
+    mapLoadingBuilding: "Building map…",
 };
 
 export type Dictionary = Record<string, string>;

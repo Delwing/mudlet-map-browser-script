@@ -1,6 +1,6 @@
 {
     "name": "mudlet-map-browser-script",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "main": "dist/index.min.js",
     "type": "module",
     "license": "MIT",
@@ -19,8 +19,8 @@
         "@tarekraafat/autocomplete.js": "^10.2.7",
         "bootstrap": "^5.3.3",
         "bootstrap-autocomplete": "^2.3.7",
-        "mudlet-map-binary-reader": "^1.0.3",
-        "mudlet-map-renderer": "^2.5.1",
+        "mudlet-map-binary-reader": "^1.2.0",
+        "mudlet-map-renderer": "^2.6.1",
         "react": "^19.2.7",
         "react-dom": "^19.2.7"
     },

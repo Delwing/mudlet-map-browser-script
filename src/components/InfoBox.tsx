@@ -1,6 +1,14 @@
+import type {MouseEvent, ReactNode} from "react";
 import {useController} from "../map/context";
 import {useNpcLoaded, useSelectedRoom} from "../map/hooks";
 import {useI18n} from "../i18n/I18n";
+
+/** Plain left-click (no modifier) navigates in-app; ctrl/cmd/middle-click and
+ * right-click-copy fall through to the real `href` so the link still works as
+ * a shareable permalink. */
+function isPlainLeftClick(e: MouseEvent): boolean {
+    return e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+}
 
 function RoomLink({id, label}: {id: number; label?: string}) {
     const controller = useController();
@@ -14,6 +22,24 @@ function RoomLink({id, label}: {id: number; label?: string}) {
             }}
         >
             {label ?? id}
+        </a>
+    );
+}
+
+/** A location-id / hash permalink: navigates in-app on a plain click, but keeps
+ * a real `href` so ctrl/cmd-click (new tab) and "copy link address" still work. */
+function PermalinkA({href, onNavigate, children}: {href: string; onNavigate: () => void; children: ReactNode}) {
+    return (
+        <a
+            className="room-link"
+            href={href}
+            onClick={e => {
+                if (!isPlainLeftClick(e)) return;
+                e.preventDefault();
+                onNavigate();
+            }}
+        >
+            {children}
         </a>
     );
 }
@@ -59,9 +85,12 @@ export function InfoBox() {
         <div className={"info-box" + (room ? " visible" : "")} style={borderColor ? {borderColor} : undefined}>
             <p>
                 <span data-i18n="location-id">{t("location-id")}</span>:{" "}
-                <a className="room-link" href={room ? `${url}?loc=${room.id}` : "#"}>
+                <PermalinkA
+                    href={room ? `${url}?loc=${room.id}` : "#"}
+                    onNavigate={() => room && controller?.findRoom(room.id)}
+                >
                     <span className="room-id">{room?.id}</span>
-                </a>
+                </PermalinkA>
             </p>
             <p>
                 <span data-i18n="name">{t("name")}</span>: <span className="room-name">{room?.name}</span>
@@ -76,7 +105,15 @@ export function InfoBox() {
                 <li>x: <span className="coord-x">{room?.x}</span></li>
                 <li>y: <span className="coord-y">{room?.y}</span></li>
                 <li>z: <span className="coord-z">{room?.z}</span></li>
-                <li>Hash: <span className="room-hash">{room?.hash ?? ""}</span></li>
+                <li>
+                    Hash:{" "}
+                    <PermalinkA
+                        href={room?.hash ? `${url}?hash=${encodeURIComponent(room.hash)}` : "#"}
+                        onNavigate={() => room?.hash && controller?.findRoomByHash(room.hash)}
+                    >
+                        <span className="room-hash">{room?.hash ?? ""}</span>
+                    </PermalinkA>
+                </li>
             </ul>
             <div className="exits" style={{display: exits.length ? "initial" : "none"}}>
                 <p>

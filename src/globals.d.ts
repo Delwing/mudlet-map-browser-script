@@ -1,4 +1,5 @@
 /// <reference path="../node_modules/mudlet-map-renderer/dist/types/MapData.d.ts" />
+/// <reference types="vite/client" />
 
 declare const mapData: MapData.Map;
 declare const colors: MapData.Env[];

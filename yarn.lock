@@ -307,17 +307,17 @@ lightningcss@^1.32.0:
     lightningcss-win32-arm64-msvc "1.32.0"
     lightningcss-win32-x64-msvc "1.32.0"
 
-mudlet-map-binary-reader@^1.0.3:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/mudlet-map-binary-reader/-/mudlet-map-binary-reader-1.0.3.tgz#31696281e84dae775b2a4da2f5200cf5a738ca9d"
-  integrity sha512-PePkAKMwOu/oM3Xq1+alYSjncgY6T/IL8U1bFJH14gYieH3Z5xQfIL8otynlb3qzhSkQB1Bari7seHOJUSmVKg==
+mudlet-map-binary-reader@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/mudlet-map-binary-reader/-/mudlet-map-binary-reader-1.2.0.tgz#c963b6688ea0fba094084d5089ec8408447cd071"
+  integrity sha512-CgjNPGkM/X3X/3CozMWn334z7aUbpvev5FSYMHMqo6cqsmdYj/vSUmCsKgWqkedCdL8Qsu+zr7bmL9i82dkvUw==
   dependencies:
     qtdatastream-web "^0.0.1"
 
-mudlet-map-renderer@^2.5.1:
-  version "2.5.1"
-  resolved "https://registry.yarnpkg.com/mudlet-map-renderer/-/mudlet-map-renderer-2.5.1.tgz#97b1186e986b1afc28303754db9ff51478a87cdb"
-  integrity sha512-PEcptAynt2L85K2AdwUSCrSkuc/d3WMnFcziN6iVmVWspEHWNtb74JSipiO8ZYzKoT4L42ynvZQ9OCsZQHCbBA==
+mudlet-map-renderer@^2.6.1:
+  version "2.6.1"
+  resolved "https://registry.yarnpkg.com/mudlet-map-renderer/-/mudlet-map-renderer-2.6.1.tgz#b3ce977f70cbb01e8fbd6e14606dc6754a41207a"
+  integrity sha512-4l+cElo0FT7Qd1C7zKCBcmmXiRNdF8qEgK6R2684BgoMo+4EhrkJTUh5PWWIknQeOehvmYWYYEOs6Vy/cWQelA==
   dependencies:
     konva "^10.2.4"
     node-dijkstra "^2.5.1"

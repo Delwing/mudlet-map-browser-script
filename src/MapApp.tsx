@@ -1,6 +1,5 @@
 import {useEffect, useRef, useState} from "react";
-import {MapReader} from "mudlet-map-renderer";
-import {loadMapData} from "./data/loadMapData";
+import {loadMapReader, type LoadStatus} from "./data/loadMapData";
 import {MapController} from "./map/MapController";
 import {MapControllerContext} from "./map/context";
 import {useI18n} from "./i18n/I18n";
@@ -25,14 +24,25 @@ export function MapApp() {
     tRef.current = t;
     const [controller, setController] = useState<MapController | null>(null);
     const [loadError, setLoadError] = useState<string | null>(null);
+    const [loadStatus, setLoadStatus] = useState<LoadStatus | null>(null);
+    // Only reveal the loading overlay once loading has taken a moment — an
+    // ordinary small map resolves the whole worker round-trip (finalizing +
+    // building included) well under this, so the happy path never flashes it.
+    const [showLoading, setShowLoading] = useState(false);
 
     useEffect(() => {
         if (!mapRef.current) return;
         let cancelled = false;
-        loadMapData()
-            .then(({mapData, colors}) => {
+        const revealTimer = setTimeout(() => {
+            if (!cancelled) setShowLoading(true);
+        }, 150);
+        loadMapReader(status => {
+            if (!cancelled) setLoadStatus(status);
+        })
+            .then(reader => {
                 if (cancelled || !mapRef.current) return;
-                const reader = new MapReader(mapData, colors);
+                clearTimeout(revealTimer);
+                setShowLoading(false);
                 // Route through tRef so language changes reach controller toasts.
                 const ctrl = new MapController(mapRef.current, reader, {t: key => tRef.current(key)});
                 ctrl.init();
@@ -41,11 +51,14 @@ export function MapApp() {
             })
             .catch((err: unknown) => {
                 if (cancelled) return;
+                clearTimeout(revealTimer);
+                setShowLoading(false);
                 console.error("mudlet-map-browser: failed to load map data", err);
                 setLoadError(err instanceof Error ? err.message : String(err));
             });
         return () => {
             cancelled = true;
+            clearTimeout(revealTimer);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -71,6 +84,24 @@ export function MapApp() {
                     <div className="map-load-error" role="alert">
                         {t("mapLoadError") || "Failed to load map data."}
                         <div className="map-load-error-detail">{loadError}</div>
+                    </div>
+                )}
+                {!loadError && showLoading && loadStatus && (
+                    <div className="map-load-status" role="status">
+                        {loadStatus.phase === "streaming" && t("mapLoadingStreaming")}
+                        {loadStatus.phase === "finalizing" && t("mapLoadingFinalizing")}
+                        {loadStatus.phase === "building" && t("mapLoadingBuilding")}
+                        {loadStatus.phase === "streaming" && (
+                            <div className="map-load-status-detail">
+                                {loadStatus.rooms.toLocaleString()} / {loadStatus.total.toLocaleString()}
+                                <div className="map-load-status-bar">
+                                    <div
+                                        className="map-load-status-bar-fill"
+                                        style={{width: `${Math.min(100, Math.round((loadStatus.rooms / Math.max(1, loadStatus.total)) * 100))}%`}}
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
                 <div id="map" ref={mapRef}></div>

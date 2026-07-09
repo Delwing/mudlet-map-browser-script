@@ -60,6 +60,16 @@ export interface MapConfig {
     /** JSON array of env colors (the old `colors.js` payload). Pair with `mapDataUrl`. */
     colorsUrl?: string;
     /**
+     * Total-room-count cutoff above which a map is rendered from a compact,
+     * viewport-virtualized `SkeletonMapReader` (with LOD rendering) instead of
+     * a full `MapReader` object graph. A `.dat` source above this size is also
+     * *parsed* streaming, in a Web Worker, so the full object graph is never
+     * held in memory at all. Defaults to 50,000 rooms (matches the renderer's
+     * own default). Only relevant for maps large enough that a full parse/scene
+     * would be slow or memory-heavy.
+     */
+    bigMapThreshold?: number;
+    /**
      * UI chrome theme: "light" or "dark" (default). Set at generation time by the
      * host page / GitHub Action — there is no in-app switcher. Drives Bootstrap's
      * color mode and our chrome via `data-bs-theme` on <html>.
