@@ -187,7 +187,6 @@ header {
     padding: 0 16px;
     background: var(--header-bg);
     backdrop-filter: blur(16px) saturate(1.8);
-    -webkit-backdrop-filter: blur(16px) saturate(1.8);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
@@ -391,7 +390,6 @@ button.control > span,
     --bs-dropdown-link-active-bg: transparent;
     background: var(--glass-bg);
     backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-sm);
     box-shadow: var(--shadow);
@@ -447,7 +445,6 @@ button.control > span,
     padding: 16px 20px;
     background: var(--glass-bg);
     backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
     border: 0.5px solid var(--glass-border);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
@@ -533,7 +530,6 @@ button.control > span,
     left: 12px;
     background: var(--glass-bg);
     backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
@@ -592,7 +588,6 @@ button.control > span,
     flex-direction: column;
     background: var(--glass-bg);
     backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius);
     box-shadow: var(--shadow-sm);
@@ -694,7 +689,6 @@ button.control > span,
     text-align: center;
     background: var(--toast-bg);
     backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
     border: 1px solid var(--accent-15);
     border-radius: 24px;
     box-shadow: var(--shadow-toast);
@@ -716,7 +710,6 @@ button.control > span,
 .modal-backdrop {
     background: rgba(0, 0, 0, 0.35) !important;
     backdrop-filter: blur(1px);
-    -webkit-backdrop-filter: blur(1px);
 }
 
 .modal-backdrop.show {
@@ -726,7 +719,6 @@ button.control > span,
 .modal-content {
     background: var(--modal-bg);
     backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius);
     box-shadow: var(--shadow-modal);
@@ -878,7 +870,6 @@ button.control > span,
 #search .modal-content {
     background: var(--palette-bg);
     backdrop-filter: none;
-    -webkit-backdrop-filter: none;
     border-radius: 16px;
     box-shadow: var(--shadow-popover);
     overflow: hidden;
