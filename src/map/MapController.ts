@@ -335,7 +335,9 @@ export class MapController {
                 style = Parchment;
                 break;
             case "parchment-pencil":
-                style = compose(Parchment, Sketchy({jitter, color: "#4a3728"}));
+                // Order matters: Sketchy whitens fills, so Parchment must run
+                // last to recolour them into the parchment palette.
+                style = compose(Sketchy({jitter, color: "#4a3728"}), Parchment);
                 break;
             case "isometric": {
                 const depth = this.settings.roomSize * 0.3;
@@ -344,7 +346,9 @@ export class MapController {
             }
             case "isometric-parchment": {
                 const depth = this.settings.roomSize * 0.3;
-                style = compose(Parchment, Sketchy({jitter, color: "#4a3728"}), Isometric({depth, rotation}));
+                // Iso must run first (it only extrudes rect/circle into cubes),
+                // then Sketchy wobbles the cube faces, then Parchment recolours.
+                style = compose(Isometric({depth, rotation}), Sketchy({jitter, color: "#4a3728"}), Parchment);
                 break;
             }
             case "blueprint":
